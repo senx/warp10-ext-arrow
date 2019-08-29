@@ -16,6 +16,7 @@
 
 package arrow.warpscriptFunctions;
 
+import arrow.ArrowAdapterHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
