@@ -103,15 +103,27 @@ configurations {
 //
 
 dependencies {
-  provided 'io.warp10:warpscript:+'
+  //provided 'io.warp10:warpscript:+'
+  provided files('/home/jc/Projects/2019/warp10-platform/warp10/archive/warp10-2.1.0-106-g2d446747/bin/warp10-2.1.0-106-g2d446747.jar')
+
+  //testCompile'io.warp10:warpscript:+'
+  testCompile files('/home/jc/Projects/2019/warp10-platform/warp10/archive/warp10-2.1.0-106-g2d446747/bin/warp10-2.1.0-106-g2d446747.jar')
+
+  testImplementation 'junit:junit:4.12'
 
   //
   // Insert your dependencies here
   //
   //compile group: 'GROUP', name: 'NAME', version: 'VERSION'
+  
+  //
+  // Arrow
+  //
 
-  testCompile'io.warp10:warpscript:+'
-  testImplementation 'junit:junit:4.12'
+  compile 'org.apache.arrow:arrow-memory:0.14.1'
+  compile 'org.apache.arrow:arrow-vector:0.14.1'
+  compile 'io.netty:netty-buffer:4.1.39.Final'
+  compile 'io.netty:netty-common:4.1.39.Final'
 }
 
 test {
