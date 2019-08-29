@@ -45,6 +45,9 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
 
     // TODO
+    if (true) {
+      throw new WarpScriptException("Not implemented yet");
+    }
 
     return stack;
   }
