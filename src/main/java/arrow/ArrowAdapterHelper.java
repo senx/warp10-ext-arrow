@@ -16,10 +16,12 @@
 package arrow;
 
 import com.geoxp.GeoXPLib;
+import io.warp10.Revision;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.thrift.data.Metadata;
 import io.warp10.script.WarpScriptException;
+import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
@@ -62,6 +64,9 @@ public class ArrowAdapterHelper {
   final static String BUCKETSPAN = "bucketspan";
   final static String BUCKETCOUNT = "bucketcount";
   final static String LASTBUCKET = "lastbucket";
+
+  final static String TYPE = "WarpScriptType";
+  final static String REV = "WarpScriptVersion";
 
   //
   // Fields of arrow schemas
@@ -108,6 +113,9 @@ public class ArrowAdapterHelper {
     //
     // Feed schema's metadata
     //
+
+    metadata.put(TYPE, TYPEOF.typeof(gts));
+    metadata.put(REV, Revision.REVISION);
 
     Metadata gtsMeta = gts.getMetadata();
 

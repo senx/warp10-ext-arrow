@@ -17,22 +17,27 @@
 package arrow.warpscriptFunctions;
 
 import arrow.ArrowAdapterHelper;
+import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
+import org.jamon.annotations.Argument;
 
+import java.util.List;
 import java.util.Map;
 
 /**
- * Encode a GTS as an Arrow stream
+ * Encode an Object as an Arrow stream
  */
 public class TOARROW extends FormattedWarpScriptFunction {
 
-  private static final String GTS = "gts";
+  private static final String IN = "in";
   private static final String BATCH_SIZE = "nTicksPerBatch";
+  private static final String OUT = "out";
 
   private final Arguments args;
+  private final Arguments output;
 
   public Arguments getArguments() {
     return args;
@@ -44,23 +49,46 @@ public class TOARROW extends FormattedWarpScriptFunction {
     getDocstring().append("TODO");
 
     args =  new ArgumentsBuilder()
-      .addArgument(GeoTimeSerie.class, GTS, "The Geo Time Series to be converted.") //TODO(JC): do it for GTSencoders as well
-      //.firstArgIsListExpandable()
-      .addOptionalArgument(Long.class, BATCH_SIZE, "The number of ticks per batch. Default to gts size.", 0L)
+      .addArgument(Object.class, IN, "The object to be converted.")
+      .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
-
+    
+    output = new ArgumentsBuilder()
+      .addArgument(byte[].class, OUT, "The resulting byte stream.")
+      .build();
   }
 
   @Override
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
-    GeoTimeSerie gts = (GeoTimeSerie) params.get(GTS);
-
+    Object in = params.get(IN);
     int nTicksPerBatch = ((Long) params.get(BATCH_SIZE)).intValue();
-    if (0 == nTicksPerBatch) {
-      nTicksPerBatch = gts.size();
+
+    if (in instanceof GeoTimeSerie) {
+      GeoTimeSerie gts = (GeoTimeSerie) in;
+
+      if (0 == nTicksPerBatch) {
+        nTicksPerBatch = gts.size();
+      }
+
+      stack.push(ArrowAdapterHelper.gtstoArrowStream(gts, nTicksPerBatch));
+
+    } else if (in instanceof GTSEncoder) {
+
+      throw new WarpScriptException(getName() + "TODO");
+
+    } else if (in instanceof List) {
+
+      throw new WarpScriptException(getName() + ": TODO");
+
+    } else if (in instanceof Map) {
+
+      throw new WarpScriptException(getName() + ": TODO");
+
+    } else {
+
+      throw  new WarpScriptException(getName() + ": unsupported input type.");
     }
 
-    stack.push(ArrowAdapterHelper.gtstoArrowStream(gts, nTicksPerBatch));
     return stack;
   }
 }
