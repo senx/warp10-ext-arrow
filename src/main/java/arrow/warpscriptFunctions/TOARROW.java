@@ -20,9 +20,10 @@ import arrow.ArrowAdapterHelper;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
+import io.warp10.script.WarpScriptLib;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
-import org.jamon.annotations.Argument;
+import io.warp10.script.functions.UNWRAPENCODER;
 
 import java.util.List;
 import java.util.Map;
@@ -49,23 +50,32 @@ public class TOARROW extends FormattedWarpScriptFunction {
     getDocstring().append("TODO");
 
     args =  new ArgumentsBuilder()
-      .addArgument(Object.class, IN, "The object to be converted.")
+      .addArgument(Object.class, IN, "The object to be converted: GTS, Encoder, String or Byte array.")
       .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
-    
+
     output = new ArgumentsBuilder()
       .addArgument(byte[].class, OUT, "The resulting byte stream.")
       .build();
   }
+
+  private static UNWRAPENCODER UNWRAPENCODER = new UNWRAPENCODER(WarpScriptLib.UNWRAPENCODER);
 
   @Override
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
     Object in = params.get(IN);
     int nTicksPerBatch = ((Long) params.get(BATCH_SIZE)).intValue();
 
-    if (in instanceof GeoTimeSerie) {
-      GeoTimeSerie gts = (GeoTimeSerie) in;
+    if (in instanceof String || in instanceof byte[]) {
 
+      stack.push(in);
+      UNWRAPENCODER.apply(stack);
+      in = stack.pop();
+    }
+
+    if (in instanceof GeoTimeSerie) {
+
+      GeoTimeSerie gts = (GeoTimeSerie) in;
       if (0 == nTicksPerBatch) {
         nTicksPerBatch = gts.size();
       }
@@ -74,15 +84,22 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
     } else if (in instanceof GTSEncoder) {
 
-      throw new WarpScriptException(getName() + "TODO");
+      GTSEncoder encoder = (GTSEncoder) in;
+      if (0 == nTicksPerBatch) {
+        nTicksPerBatch = (int) encoder.getCount();
+      }
+
+      stack.push(ArrowAdapterHelper.gtsEncodertoArrowStream(encoder, nTicksPerBatch));
 
     } else if (in instanceof List) {
 
+      // table extends ArrayList<GeoTimeSeries> ?
       throw new WarpScriptException(getName() + ": TODO");
 
     } else if (in instanceof Map) {
 
-      throw new WarpScriptException(getName() + ": TODO");
+      // Map<List<Object>> ....
+      throw new WarpScriptException(getName() + ": TODO ?");
 
     } else {
 

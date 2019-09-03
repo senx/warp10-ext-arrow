@@ -17,8 +17,11 @@ package arrow;
 
 import com.geoxp.GeoXPLib;
 import io.warp10.Revision;
+import io.warp10.continuum.gts.GTSDecoder;
+import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
+import io.warp10.continuum.store.Constants;
 import io.warp10.continuum.store.thrift.data.Metadata;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.functions.TYPEOF;
@@ -27,6 +30,7 @@ import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.Float4Vector;
 import org.apache.arrow.vector.Float8Vector;
+import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
@@ -44,6 +48,7 @@ import org.boon.json.JsonSerializerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,15 +56,17 @@ import java.util.Map;
 
 public class ArrowAdapterHelper {
 
-
-  final static String TIMESTAMPS_KEY = "timestamps";
-  final static String LONG_VALUES_KEY = "long_values";
-  final static String DOUBLE_VALUES_KEY = "double_values";
-  final static String BOOLEAN_VALUES_KEY = "boolean_values";
-  final static String STRING_VALUES_KEY = "string_values";
-  final static String LATITUDE_KEY = "latitudes";
-  final static String LONGITUDE_KEY = "longitudes";
-  final static String ELEVATION_KEY = "elevations";
+  final static String TIMESTAMPS_KEY = "timestamp";
+  final static String LONG_VALUES_KEY = TYPEOF.typeof(Long.class);
+  final static String DOUBLE_VALUES_KEY = TYPEOF.typeof(Double.class);
+  final static String BIGDECIMAL_VALUES_KEY = "BIGDECIMAL.CONTENT";
+  final static String BIGDECIMAL_SCALES_KEY = "BIGDECIMAL.SCALE";
+  final static String BOOLEAN_VALUES_KEY = TYPEOF.typeof(Boolean.class);
+  final static String STRING_VALUES_KEY = TYPEOF.typeof(String.class);
+  final static String BYTES_VALUES_KEY = TYPEOF.typeof(byte[].class);
+  final static String LATITUDE_KEY = "latitude";
+  final static String LONGITUDE_KEY = "longitude";
+  final static String ELEVATION_KEY = "elevation";
 
   final static String BUCKETSPAN = "bucketspan";
   final static String BUCKETCOUNT = "bucketcount";
@@ -67,6 +74,7 @@ public class ArrowAdapterHelper {
 
   final static String TYPE = "WarpScriptType";
   final static String REV = "WarpScriptVersion";
+  final static String STU = "WarpScriptSecondsPerTimeUnit";
 
   //
   // Fields of arrow schemas
@@ -77,6 +85,7 @@ public class ArrowAdapterHelper {
     return new Field(key, new FieldType(false, type, null), null);
   }
 
+  // GTS fields
   final static Field TIMESTAMP_FIELD = nonNullable(TIMESTAMPS_KEY, new ArrowType.Int(64, true));
   final static Field LONG_VALUES_FIELD = Field.nullable(LONG_VALUES_KEY,new ArrowType.Int(64, true));
   final static Field DOUBLE_VALUES_FIELD = Field.nullable(DOUBLE_VALUES_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE));
@@ -85,6 +94,12 @@ public class ArrowAdapterHelper {
   final static Field LATITUDE_FIELD = Field.nullable(LATITUDE_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE));
   final static Field LONGITUDE_FIELD = Field.nullable(LONGITUDE_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE));
   final static Field ELEVATION_FIELD = Field.nullable(ELEVATION_KEY, new ArrowType.Int(64, true));
+
+  // additional fields for GTSEncoders
+  final static Field UTF8_VALUES_FIELD = Field.nullable(STRING_VALUES_KEY, new ArrowType.Utf8()); // replaces STRING_VALUES_FIELD
+  final static Field BYTES_VALUES_FIELD = Field.nullable(BYTES_VALUES_KEY, new ArrowType.Binary());
+  final static Field BIGDECIMAL_VALUES_FIELD = Field.nullable(BIGDECIMAL_VALUES_KEY, new ArrowType.Int(64, true));
+  final static Field BIGDECIMAL_SCALES_FIELD = Field.nullable(BIGDECIMAL_SCALES_KEY, new ArrowType.Int(32, true));
 
   //
   // Json converters for labels and attributes
@@ -101,23 +116,14 @@ public class ArrowAdapterHelper {
   }
 
   /**
-   * Creates an Arrow schema fitted to a GTS
-   * @param gts
+   * Extract Gts Metadata into a Map that can be used as metadata of an Arrow Schema
+   *
+   * @param gtsMeta
    * @return
    */
-  public static Schema createGtsSchema(GeoTimeSerie gts) throws WarpScriptException {
+  private static Map<String, String> extractGtsMetadata(Metadata gtsMeta) {
 
-    List<Field> fields = new ArrayList<>();
     Map<String, String> metadata = new HashMap<>();
-
-    //
-    // Feed schema's metadata
-    //
-
-    metadata.put(TYPE, TYPEOF.typeof(gts));
-    metadata.put(REV, Revision.REVISION);
-
-    Metadata gtsMeta = gts.getMetadata();
 
     if (gtsMeta.isSetName()) {
       metadata.put(Metadata._Fields.NAME.getFieldName(), gtsMeta.getName());
@@ -146,6 +152,31 @@ public class ArrowAdapterHelper {
     if(gtsMeta.isSetLastActivity()) {
       metadata.put(Metadata._Fields.LAST_ACTIVITY.getFieldName(), String.valueOf(gtsMeta.getLastActivity()));
     }
+
+    return metadata;
+  }
+
+  //
+  // GTS to Arrow
+  //
+
+  /**
+   * Creates an Arrow schema fitted to a GTS
+   * @param gts
+   * @return
+   */
+  public static Schema createGtsSchema(GeoTimeSerie gts) throws WarpScriptException {
+
+    List<Field> fields = new ArrayList<>();
+
+    //
+    // Feed schema's metadata
+    //
+
+    Map<String, String> metadata = extractGtsMetadata(gts.getMetadata());
+    metadata.put(TYPE, TYPEOF.typeof(gts));
+    metadata.put(REV, Revision.REVISION);
+    metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 
     //
     // Bucketize info
@@ -239,7 +270,7 @@ public class ArrowAdapterHelper {
           case BOOLEAN: ((BitVector) root.getVector(BOOLEAN_VALUES_KEY)).setSafe(i % nTicksPerBatch, (boolean) GTSHelper.valueAtIndex(gts, i) ? 1 : 0);
           break;
 
-          case STRING: ((VarCharVector) root.getVector(STRING_VALUES_KEY)).setSafe(i % nTicksPerBatch, new Text((String) GTSHelper.valueAtIndex(gts, i)));
+          case STRING: ((VarBinaryVector) root.getVector(STRING_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((String) GTSHelper.valueAtIndex(gts, i)).getBytes());
           break;
 
           case UNDEFINED: throw new WarpScriptException("Cannot create an Arrow stream for a GTS with data of undefined type.");
@@ -263,11 +294,145 @@ public class ArrowAdapterHelper {
     return ((ByteArrayOutputStream) out).toByteArray();
   }
 
-  public boolean isSchemaOfGts(Schema schema) {
+  //
+  // GtsEncoder to Arrow
+  //
 
 
+  /**
+   * Creates an Arrow schema fitted to a GtsEncoder
+   * @param encoder
+   * @return
+   */
+  public static Schema createGtsEncoderSchema(GTSEncoder encoder) throws WarpScriptException {
 
+    List<Field> fields = new ArrayList<>();
 
-    return true;
+    //
+    // Feed schema's metadata
+    //
+
+    Map<String, String> metadata;
+
+    Metadata meta = encoder.getRawMetadata();
+
+    if (null != meta) {
+      metadata = extractGtsMetadata(meta);
+
+    } else {
+      metadata = new HashMap<String, String>();
+    }
+
+    metadata.put(TYPE, TYPEOF.typeof(encoder));
+    metadata.put(REV, Revision.REVISION);
+    metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
+
+    //
+    // Feed schema's fields
+    //
+
+    if (0 == encoder.size()) {
+      return new Schema(fields, metadata);
+    }
+
+    fields.add(TIMESTAMP_FIELD);
+    fields.add(LATITUDE_FIELD);
+    fields.add(LONGITUDE_FIELD);
+    fields.add(ELEVATION_FIELD);
+    fields.add(LONG_VALUES_FIELD);
+    fields.add(DOUBLE_VALUES_FIELD);
+    fields.add(BIGDECIMAL_VALUES_FIELD);
+    fields.add(BIGDECIMAL_SCALES_FIELD);
+    fields.add(BOOLEAN_VALUES_FIELD);
+    fields.add(UTF8_VALUES_FIELD);
+    fields.add(BYTES_VALUES_FIELD);
+
+    return new Schema(fields, metadata);
+  }
+
+  /**
+   * Convert a GtsEncoder to an arrow stream
+   */
+  public static byte[] gtsEncodertoArrowStream(GTSEncoder encoder, int nTicksPerBatch) throws WarpScriptException {
+
+    VectorSchemaRoot root = VectorSchemaRoot.create(createGtsEncoderSchema(encoder), new RootAllocator(Integer.MAX_VALUE));
+
+    //
+    // Feed data to root
+    //
+
+    OutputStream out = new ByteArrayOutputStream();
+
+    try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, null, out)) {
+
+      writer.start();
+      root.setRowCount(nTicksPerBatch);
+
+      GTSDecoder decoder = encoder.getDecoder(true);
+
+      int i = 0;
+      while (decoder.next()) {
+
+        // tick
+        ((BigIntVector) root.getVector(TIMESTAMPS_KEY)).setSafe(i % nTicksPerBatch, decoder.getBaseTimestamp());
+
+        // location
+        double[] latlon = GeoXPLib.fromGeoXPPoint(decoder.getLocation());
+        ((Float4Vector) root.getVector(LATITUDE_KEY)).setSafe(i % nTicksPerBatch, (float) latlon[0]);
+        ((Float4Vector) root.getVector(LONGITUDE_KEY)).setSafe(i % nTicksPerBatch, (float) latlon[1]);
+
+        // elevation
+        ((BigIntVector) root.getVector(ELEVATION_KEY)).setSafe(i % nTicksPerBatch, decoder.getElevation());
+
+        //
+        // value:
+        // long, boolean, double, BigDecimal, String, StringBinary
+        //
+
+        Object value = decoder.getBinaryValue();
+
+        if (value instanceof Long) {
+          ((BigIntVector) root.getVector(LONG_VALUES_KEY)).setSafe(i % nTicksPerBatch, (long) decoder.getValue());
+
+        } else if (value instanceof Boolean) {
+          ((BitVector) root.getVector(BOOLEAN_VALUES_KEY)).setSafe(i % nTicksPerBatch, (boolean) decoder.getValue() ? 1 : 0);
+
+        } else if (value instanceof Double) {
+          ((Float8Vector) root.getVector(DOUBLE_VALUES_KEY)).setSafe(i % nTicksPerBatch, (double) decoder.getValue());
+
+        } else if (value instanceof BigDecimal) {
+          ((BigIntVector) root.getVector(BIGDECIMAL_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).longValue());
+          ((BigIntVector) root.getVector(BIGDECIMAL_SCALES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).scale());
+
+        } else if (value instanceof String) {
+
+          if (decoder.isBinary()) {
+            ((VarCharVector) root.getVector(STRING_VALUES_KEY)).setSafe(i % nTicksPerBatch, new Text((String) value));
+
+          } else {
+            ((VarBinaryVector) root.getVector(BYTES_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((String) value).getBytes());
+          }
+
+        } else {
+          throw new WarpScriptException("Unrecognized value type when trying to convert a GTSENCODER to an Arrow Stream");
+        }
+
+        if (i % nTicksPerBatch == nTicksPerBatch - 1) {
+          writer.writeBatch();
+        }
+
+      }
+
+      if ((encoder.size() - 1) % nTicksPerBatch != nTicksPerBatch - 1 ) {
+        root.setRowCount((encoder.size() - 1) % nTicksPerBatch);
+        writer.writeBatch();
+      }
+
+      writer.end();
+    } catch (IOException e) {
+      throw new WarpScriptException(e);
+    }
+
+    return ((ByteArrayOutputStream) out).toByteArray();
   }
 }
