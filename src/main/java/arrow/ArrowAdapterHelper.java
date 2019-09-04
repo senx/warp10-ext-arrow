@@ -45,7 +45,6 @@ import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
 import org.boon.json.JsonSerializerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -228,17 +227,15 @@ public class ArrowAdapterHelper {
   }
 
   /**
-   * Convert a GTS to an arrow stream
+   * Convert a GTS to an output stream in arrow format
    */
-  public static byte[] gtstoArrowStream(GeoTimeSerie gts, int nTicksPerBatch) throws WarpScriptException {
+  public static void gtstoArrowStream(GeoTimeSerie gts, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
 
     VectorSchemaRoot root = VectorSchemaRoot.create(createGtsSchema(gts), new RootAllocator(Integer.MAX_VALUE));
 
     //
     // Feed data to root
     //
-
-    OutputStream out = new ByteArrayOutputStream();
 
     try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, null, out)) {
 
@@ -289,9 +286,9 @@ public class ArrowAdapterHelper {
       writer.end();
     } catch (IOException e) {
       throw new WarpScriptException(e);
+    } finally {
+      root.close();
     }
-
-    return ((ByteArrayOutputStream) out).toByteArray();
   }
 
   //
@@ -353,15 +350,13 @@ public class ArrowAdapterHelper {
   /**
    * Convert a GtsEncoder to an arrow stream
    */
-  public static byte[] gtsEncodertoArrowStream(GTSEncoder encoder, int nTicksPerBatch) throws WarpScriptException {
+  public static void gtsEncodertoArrowStream(GTSEncoder encoder, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
 
     VectorSchemaRoot root = VectorSchemaRoot.create(createGtsEncoderSchema(encoder), new RootAllocator(Integer.MAX_VALUE));
 
     //
     // Feed data to root
     //
-
-    OutputStream out = new ByteArrayOutputStream();
 
     try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, null, out)) {
 
@@ -431,8 +426,8 @@ public class ArrowAdapterHelper {
       writer.end();
     } catch (IOException e) {
       throw new WarpScriptException(e);
+    } finally {
+      root.close();
     }
-
-    return ((ByteArrayOutputStream) out).toByteArray();
   }
 }

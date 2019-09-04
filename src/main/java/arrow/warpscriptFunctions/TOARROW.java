@@ -25,6 +25,7 @@ import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
 import io.warp10.script.functions.UNWRAPENCODER;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +81,9 @@ public class TOARROW extends FormattedWarpScriptFunction {
         nTicksPerBatch = gts.size();
       }
 
-      stack.push(ArrowAdapterHelper.gtstoArrowStream(gts, nTicksPerBatch));
+      ByteArrayOutputStream out =  new ByteArrayOutputStream();
+      ArrowAdapterHelper.gtstoArrowStream(gts, nTicksPerBatch, out);
+      stack.push(out.toByteArray());
 
     } else if (in instanceof GTSEncoder) {
 
@@ -89,12 +92,14 @@ public class TOARROW extends FormattedWarpScriptFunction {
         nTicksPerBatch = (int) encoder.getCount();
       }
 
-      stack.push(ArrowAdapterHelper.gtsEncodertoArrowStream(encoder, nTicksPerBatch));
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ArrowAdapterHelper.gtsEncodertoArrowStream(encoder, nTicksPerBatch, out);
+      stack.push(out.toByteArray());
 
     } else if (in instanceof List) {
 
       // table extends ArrayList<GeoTimeSeries> ?
-      throw new WarpScriptException(getName() + ": TODO");
+      throw new WarpScriptException(getName() + ": TODO ?");
 
     } else if (in instanceof Map) {
 
