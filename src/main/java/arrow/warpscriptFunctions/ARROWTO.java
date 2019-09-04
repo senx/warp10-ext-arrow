@@ -19,6 +19,8 @@ import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
 
+import java.io.ByteArrayInputStream;
+import java.nio.channels.Channels;
 import java.util.Map;
 
 /**
@@ -37,17 +39,16 @@ public class ARROWTO extends FormattedWarpScriptFunction {
     super(name);
 
     args = new ArgumentsBuilder()
-      .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
+      .addArgument(byte[].class, BYTES, "Arrow stream to be decoded. See https://arrow.apache.org/docs/ipc.html." )
       .build();
 
   }
 
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
 
-    // TODO
-    if (true) {
-      throw new WarpScriptException("Not implemented yet");
-    }
+    byte[] in = (byte[]) params.get(BYTES);
+
+    stack.push(Channels.newChannel(new ByteArrayInputStream(in)));
 
     return stack;
   }

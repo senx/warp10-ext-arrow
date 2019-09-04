@@ -28,11 +28,13 @@ import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
+import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.Float4Vector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
@@ -48,6 +50,7 @@ import org.boon.json.JsonSerializerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -110,7 +113,7 @@ public class ArrowAdapterHelper {
   }
 
   final static JsonParser parser = new JsonParserFactory().create();
-  private static Object jsonTo(String s) {
+  private static Object fromJson(String s) {
     return parser.parse(s);
   }
 
@@ -153,6 +156,27 @@ public class ArrowAdapterHelper {
     }
 
     return metadata;
+  }
+
+  /**
+   * Retrieve Gts Metadata from an Arrow Schema
+   * @param schema
+   * @return
+   */
+  private static Metadata retrieveGtsMetadata(Schema schema) {
+
+    Metadata gtsMeta = new Metadata();
+    Map<String, String> metadata = schema.getCustomMetadata();
+
+    gtsMeta.setName(metadata.get(Metadata._Fields.NAME.getFieldName()));
+    gtsMeta.setLabels((Map<String, String>) fromJson(metadata.get(Metadata._Fields.LABELS.getFieldName())));
+    gtsMeta.setClassId(Long.valueOf(metadata.get(Metadata._Fields.CLASS_ID.getFieldName())).longValue());
+    gtsMeta.setLabelsId(Long.valueOf(metadata.get(Metadata._Fields.LABELS_ID.getFieldName())).longValue());
+    gtsMeta.setAttributes((Map<String, String>) fromJson(metadata.get(Metadata._Fields.ATTRIBUTES.getFieldName())));
+    gtsMeta.setSource(metadata.get(Metadata._Fields.SOURCE.getFieldName()));
+    gtsMeta.setLastActivity(Long.valueOf(metadata.get(Metadata._Fields.LAST_ACTIVITY.getFieldName())).longValue());
+
+    return gtsMeta;
   }
 
   //
@@ -430,4 +454,170 @@ public class ArrowAdapterHelper {
       root.close();
     }
   }
+
+  //
+  // Readers
+  //
+
+  public static Object fromArrowStream(ReadableByteChannel in) throws WarpScriptException {
+
+    Object res = null;
+
+    try (ArrowStreamReader reader = new ArrowStreamReader(in, new RootAllocator(Integer.MAX_VALUE))) {
+
+      //
+      // Check types by reading schema
+      //
+
+      VectorSchemaRoot root = reader.getVectorSchemaRoot();
+
+      if (TYPEOF.typeof(GeoTimeSerie.class) != root.getSchema().getCustomMetadata().get(TYPE)) {
+        res = arrowStreamToGTS(root, reader);
+
+      } else if (TYPEOF.typeof(GTSEncoder.class) != root.getSchema().getCustomMetadata().get(TYPE)) {
+        res = arrowStreamToGtsEncoder(root, reader);
+
+      } else {
+
+        //TODO(jc): should return metadata and a map of list (per field)
+
+        throw new WarpScriptException("Unsupported type right now.");
+      }
+
+    } catch (IOException ioe) {
+      throw new WarpScriptException(ioe);
+    }
+
+   return res;
+  }
+
+  private static void safeSetType(GeoTimeSerie gts, GeoTimeSerie.TYPE type) throws WarpScriptException {
+    if (GeoTimeSerie.TYPE.UNDEFINED != gts.getType()) {
+      throw new WarpScriptException("Tried to set type of a GTS that already has a type.");
+    } else {
+      gts.setType(type);
+    }
+  }
+
+  private static GeoTimeSerie arrowStreamToGTS(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+
+    Schema schema = root.getSchema();
+    if (TYPEOF.typeof(GeoTimeSerie.class) != schema.getCustomMetadata().get(TYPE)) {
+      throw new WarpScriptException("Not a Geo Time Series.");
+    }
+
+    GeoTimeSerie gts =  new GeoTimeSerie();
+    gts.setMetadata(retrieveGtsMetadata(schema));
+
+    //
+    // Retrieve fields
+    //
+
+    FieldVector timestampField = root.getVector(TIMESTAMPS_KEY);
+    FieldVector latitudeField =  root.getVector(LATITUDE_KEY);
+    FieldVector longitudeField =  root.getVector(LONGITUDE_KEY);
+    FieldVector elevationField =  root.getVector(ELEVATION_KEY);
+    FieldVector longField =  root.getVector(LONG_VALUES_KEY);
+    FieldVector doubleField =  root.getVector(DOUBLE_VALUES_KEY);
+    FieldVector booleanField =  root.getVector(BOOLEAN_VALUES_KEY);
+    FieldVector stringField =  root.getVector(STRING_VALUES_KEY);
+
+    //
+    // Set Gts type
+    //
+
+    if (null != longField) {
+      safeSetType(gts, GeoTimeSerie.TYPE.LONG);
+    }
+
+    if (null != doubleField) {
+      safeSetType(gts, GeoTimeSerie.TYPE.DOUBLE);
+    }
+
+    if (null != booleanField) {
+      safeSetType(gts, GeoTimeSerie.TYPE.BOOLEAN);
+    }
+
+    if (null != stringField) {
+      safeSetType(gts, GeoTimeSerie.TYPE.STRING);
+    }
+
+    //
+    // Retrieve time unit per seconds
+    //
+
+    long stu = Long.valueOf(schema.getCustomMetadata().get(STU)).longValue();
+    double timeFactor = new Double(stu) / Constants.TIME_UNITS_PER_S;
+
+    //
+    // Retrieve bucketize info
+    //
+
+    if (null != schema.getCustomMetadata().get(LASTBUCKET)) {
+      GTSHelper.setLastBucket(gts, Integer.valueOf(schema.getCustomMetadata().get(LASTBUCKET)).intValue());
+    }
+
+    if (null != schema.getCustomMetadata().get(BUCKETSPAN)) {
+      GTSHelper.setBucketSpan(gts, Integer.valueOf(schema.getCustomMetadata().get(BUCKETSPAN)).intValue());
+    }
+
+    if (null != schema.getCustomMetadata().get(BUCKETCOUNT)) {
+      GTSHelper.setBucketCount(gts, Integer.valueOf(schema.getCustomMetadata().get(BUCKETCOUNT)).intValue());
+    }
+
+    //
+    // Read data points
+    //
+
+    while (reader.loadNextBatch()) {
+
+      for (int i = 0; i < root.getRowCount(); i++) {
+
+        long tick = timestampField.getDataBuffer().getLong(i);
+        if (timeFactor != 1.0D) {
+          tick = new Double(tick * timeFactor).longValue();
+        }
+
+        long location = GeoTimeSerie.NO_LOCATION;
+        if (null != latitudeField && null != longitudeField) {
+          location = GeoXPLib.toGeoXPPoint(latitudeField.getDataBuffer().getFloat(i), longitudeField.getDataBuffer().getFloat(i));
+        }
+
+        long elevation = GeoTimeSerie.NO_ELEVATION;
+        if (null != elevationField) {
+          elevation = elevationField.getDataBuffer().getLong(i);
+        }
+
+        Object value;
+        switch (gts.getType()) {
+          case LONG: value = longField.getDataBuffer().getLong(i);
+          break;
+
+          case DOUBLE: value = doubleField.getDataBuffer().getDouble(i);
+          break;
+
+          case BOOLEAN: value = ((BitVector) booleanField).getObject(i);
+          break;
+
+          case STRING: value = ((VarBinaryVector) booleanField).getObject(i); // byte[]
+          break;
+
+          default: throw new WarpScriptException("Can't define GTS type of input arrow stream");
+        }
+
+        GTSHelper.setValue(gts, tick, location, elevation, value, false);
+
+      }
+
+    }
+
+    return gts;
+  }
+
+  private static GTSEncoder arrowStreamToGtsEncoder(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+    throw new WarpScriptException("Not yet implemented");
+  }
+
+
+
 }
