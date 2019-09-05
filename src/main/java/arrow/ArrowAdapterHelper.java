@@ -56,6 +56,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utilities and converters
+ *
+ * TODO(JC): maybe refactor into multiple classes (one reader/writer per subtype and type).
+ */
 public class ArrowAdapterHelper {
 
   final static String TIMESTAMPS_KEY = "timestamp";
@@ -573,42 +578,52 @@ public class ArrowAdapterHelper {
 
       for (int i = 0; i < root.getRowCount(); i++) {
 
-        long tick = timestampField.getDataBuffer().getLong(i);
+        timestampField.getReader().setPosition(i);
+        long tick = timestampField.getReader().readLong().longValue();
         if (timeFactor != 1.0D) {
           tick = new Double(tick * timeFactor).longValue();
         }
 
         long location = GeoTimeSerie.NO_LOCATION;
         if (null != latitudeField && null != longitudeField) {
-          location = GeoXPLib.toGeoXPPoint(latitudeField.getDataBuffer().getFloat(i), longitudeField.getDataBuffer().getFloat(i));
+          latitudeField.getReader().setPosition(i);
+          longitudeField.getReader().setPosition(i);
+          location = GeoXPLib.toGeoXPPoint(latitudeField.getReader().readFloat(), longitudeField.getReader().readFloat());
         }
 
         long elevation = GeoTimeSerie.NO_ELEVATION;
         if (null != elevationField) {
-          elevation = elevationField.getDataBuffer().getLong(i);
+          elevationField.getReader().setPosition(i);
+          elevation = elevationField.getReader().readLong();
         }
 
         Object value;
         switch (gts.getType()) {
-          case LONG: value = longField.getDataBuffer().getLong(i);
-          break;
+          case LONG:
+            longField.getReader().setPosition(i);
+            value = longField.getReader().readObject();
+            break;
 
-          case DOUBLE: value = doubleField.getDataBuffer().getDouble(i);
-          break;
+          case DOUBLE:
+            doubleField.getReader().setPosition(i);
+            value = doubleField.getReader().readObject();
+            break;
 
-          case BOOLEAN: value = ((BitVector) booleanField).getObject(i);
-          break;
+          case BOOLEAN:
+            booleanField.getReader().setPosition(i);
+            value = booleanField.getReader().readObject();
+            break;
 
-          case STRING: value = ((VarBinaryVector) booleanField).getObject(i); // byte[]
-          break;
+          case STRING:
+            stringField.getReader().setPosition(i);
+            value = stringField.getReader().readObject();
+            break;
 
           default: throw new WarpScriptException("Can't define GTS type of input arrow stream");
         }
 
         GTSHelper.setValue(gts, tick, location, elevation, value, false);
-
       }
-
     }
 
     return gts;
