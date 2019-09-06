@@ -82,6 +82,8 @@ wrapper {
 //
 
 repositories {
+  mavenLocal()
+
   jcenter()
   
   maven {
@@ -103,30 +105,25 @@ configurations {
 //
 
 dependencies {
-  //provided 'io.warp10:warpscript:+'
-  provided files('/home/jc/Projects/2019/warp10-platform/warpscript/build/libs/warpscript-2.1.0-143-gf1547c12.jar')
+  provided 'io.warp10:warpscript:2.1.0-143-gf1547c12'
 
-  //testCompile'io.warp10:warpscript:+'
-  testCompile files('/home/jc/Projects/2019/warp10-platform/warpscript/build/libs/warpscript-2.1.0-143-gf1547c12.jar')
-
+  testCompile'io.warp10:warpscript:2.1.0-143-gf1547c12'
+  
   testImplementation 'junit:junit:4.12'
 
   //
   // Insert your dependencies here
   //
   //compile group: 'GROUP', name: 'NAME', version: 'VERSION'
-  
-  provided 'com.geoxp:geoxplib:+'
-  provided 'io.fastjson:boon:0.14'
-  
+
   //
   // Arrow
   //
 
   compile 'org.apache.arrow:arrow-memory:0.14.1'
   compile 'org.apache.arrow:arrow-vector:0.14.1'
-  compile 'io.netty:netty-buffer:4.1.39.Final'
-  compile 'io.netty:netty-common:4.1.39.Final'
+  compile 'io.netty:netty-buffer:4.1.27.Final'
+  compile 'io.netty:netty-common:4.1.27.Final'
 }
 
 test {
