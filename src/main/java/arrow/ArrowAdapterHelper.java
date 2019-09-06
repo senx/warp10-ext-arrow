@@ -66,8 +66,8 @@ public class ArrowAdapterHelper {
   final static String TIMESTAMPS_KEY = "timestamp";
   final static String LONG_VALUES_KEY = TYPEOF.typeof(Long.class);
   final static String DOUBLE_VALUES_KEY = TYPEOF.typeof(Double.class);
-  final static String BIGDECIMAL_VALUES_KEY = "BIGDECIMAL.CONTENT";
-  final static String BIGDECIMAL_SCALES_KEY = "BIGDECIMAL.SCALE";
+  //final static String BIGDECIMAL_VALUES_KEY = "BIGDECIMAL.CONTENT";
+  //final static String BIGDECIMAL_SCALES_KEY = "BIGDECIMAL.SCALE";
   final static String BOOLEAN_VALUES_KEY = TYPEOF.typeof(Boolean.class);
   final static String STRING_VALUES_KEY = TYPEOF.typeof(String.class);
   final static String BYTES_VALUES_KEY = TYPEOF.typeof(byte[].class);
@@ -105,8 +105,8 @@ public class ArrowAdapterHelper {
   // additional fields for GTSEncoders
   final static Field UTF8_VALUES_FIELD = Field.nullable(STRING_VALUES_KEY, new ArrowType.Utf8()); // replaces STRING_VALUES_FIELD
   final static Field BYTES_VALUES_FIELD = Field.nullable(BYTES_VALUES_KEY, new ArrowType.Binary());
-  final static Field BIGDECIMAL_VALUES_FIELD = Field.nullable(BIGDECIMAL_VALUES_KEY, new ArrowType.Int(64, true));
-  final static Field BIGDECIMAL_SCALES_FIELD = Field.nullable(BIGDECIMAL_SCALES_KEY, new ArrowType.Int(32, true));
+  //final static Field BIGDECIMAL_VALUES_FIELD = Field.nullable(BIGDECIMAL_VALUES_KEY, new ArrowType.Int(64, true));
+  //final static Field BIGDECIMAL_SCALES_FIELD = Field.nullable(BIGDECIMAL_SCALES_KEY, new ArrowType.Int(32, true));
 
   //
   // Json converters for labels and attributes
@@ -392,8 +392,8 @@ public class ArrowAdapterHelper {
     fields.add(ELEVATION_FIELD);
     fields.add(LONG_VALUES_FIELD);
     fields.add(DOUBLE_VALUES_FIELD);
-    fields.add(BIGDECIMAL_VALUES_FIELD);
-    fields.add(BIGDECIMAL_SCALES_FIELD);
+    //fields.add(BIGDECIMAL_VALUES_FIELD);
+    //fields.add(BIGDECIMAL_SCALES_FIELD);
     fields.add(BOOLEAN_VALUES_FIELD);
     fields.add(UTF8_VALUES_FIELD);
     fields.add(BYTES_VALUES_FIELD);
@@ -423,7 +423,7 @@ public class ArrowAdapterHelper {
       while (decoder.next()) {
 
         // tick
-        ((BigIntVector) root.getVector(TIMESTAMPS_KEY)).setSafe(i % nTicksPerBatch, decoder.getBaseTimestamp());
+        ((BigIntVector) root.getVector(TIMESTAMPS_KEY)).setSafe(i % nTicksPerBatch, decoder.getTimestamp());
 
         // location
         double[] latlon = GeoXPLib.fromGeoXPPoint(decoder.getLocation());
@@ -441,26 +441,24 @@ public class ArrowAdapterHelper {
         Object value = decoder.getBinaryValue();
 
         if (value instanceof Long) {
-          ((BigIntVector) root.getVector(LONG_VALUES_KEY)).setSafe(i % nTicksPerBatch, (long) decoder.getValue());
+          ((BigIntVector) root.getVector(LONG_VALUES_KEY)).setSafe(i % nTicksPerBatch, (long) value);
 
         } else if (value instanceof Boolean) {
-          ((BitVector) root.getVector(BOOLEAN_VALUES_KEY)).setSafe(i % nTicksPerBatch, (boolean) decoder.getValue() ? 1 : 0);
+          ((BitVector) root.getVector(BOOLEAN_VALUES_KEY)).setSafe(i % nTicksPerBatch, (boolean) value ? 1 : 0);
 
         } else if (value instanceof Double) {
-          ((Float8Vector) root.getVector(DOUBLE_VALUES_KEY)).setSafe(i % nTicksPerBatch, (double) decoder.getValue());
+          ((Float8Vector) root.getVector(DOUBLE_VALUES_KEY)).setSafe(i % nTicksPerBatch, (double) value);
 
         } else if (value instanceof BigDecimal) {
-          ((BigIntVector) root.getVector(BIGDECIMAL_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).longValue());
-          ((BigIntVector) root.getVector(BIGDECIMAL_SCALES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).scale());
+          ((Float8Vector) root.getVector(DOUBLE_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).doubleValue());
+          //((BigIntVector) root.getVector(BIGDECIMAL_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).longValue());
+          //((BigIntVector) root.getVector(BIGDECIMAL_SCALES_KEY)).setSafe(i % nTicksPerBatch, ((BigDecimal) value).scale());
 
         } else if (value instanceof String) {
+          ((VarCharVector) root.getVector(STRING_VALUES_KEY)).setSafe(i % nTicksPerBatch, new Text((String) value));
 
-          if (decoder.isBinary()) {
-            ((VarCharVector) root.getVector(STRING_VALUES_KEY)).setSafe(i % nTicksPerBatch, new Text((String) value));
-
-          } else {
-            ((VarBinaryVector) root.getVector(BYTES_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((String) value).getBytes());
-          }
+        } else if (value instanceof byte[]) {
+          ((VarBinaryVector) root.getVector(BYTES_VALUES_KEY)).setSafe(i % nTicksPerBatch, ((String) value).getBytes());
 
         } else {
           throw new WarpScriptException("Unrecognized value type when trying to convert a GTSENCODER to an Arrow Stream");
@@ -470,10 +468,11 @@ public class ArrowAdapterHelper {
           writer.writeBatch();
         }
 
+        i++;
       }
 
-      if ((encoder.size() - 1) % nTicksPerBatch != nTicksPerBatch - 1 ) {
-        root.setRowCount((encoder.size() - 1) % nTicksPerBatch);
+      if ((encoder.getCount() - 1) % nTicksPerBatch != nTicksPerBatch - 1 ) {
+        root.setRowCount(((int) encoder.getCount() - 1) % nTicksPerBatch);
         writer.writeBatch();
       }
 
@@ -543,32 +542,32 @@ public class ArrowAdapterHelper {
     // Retrieve fields
     //
 
-    FieldVector timestampField = root.getVector(TIMESTAMPS_KEY);
-    FieldVector latitudeField =  root.getVector(LATITUDE_KEY);
-    FieldVector longitudeField =  root.getVector(LONGITUDE_KEY);
-    FieldVector elevationField =  root.getVector(ELEVATION_KEY);
-    FieldVector longField =  root.getVector(LONG_VALUES_KEY);
-    FieldVector doubleField =  root.getVector(DOUBLE_VALUES_KEY);
-    FieldVector booleanField =  root.getVector(BOOLEAN_VALUES_KEY);
-    FieldVector stringField =  root.getVector(STRING_VALUES_KEY);
+    FieldVector timestampVector = root.getVector(TIMESTAMPS_KEY);
+    FieldVector latitudeVector =  root.getVector(LATITUDE_KEY);
+    FieldVector longitudeVector =  root.getVector(LONGITUDE_KEY);
+    FieldVector elevationVector =  root.getVector(ELEVATION_KEY);
+    FieldVector longVector =  root.getVector(LONG_VALUES_KEY);
+    FieldVector doubleVector =  root.getVector(DOUBLE_VALUES_KEY);
+    FieldVector booleanVector =  root.getVector(BOOLEAN_VALUES_KEY);
+    FieldVector stringVector =  root.getVector(STRING_VALUES_KEY);
 
     //
     // Set Gts type
     //
 
-    if (null != longField) {
+    if (null != longVector) {
       safeSetType(gts, GeoTimeSerie.TYPE.LONG);
     }
 
-    if (null != doubleField) {
+    if (null != doubleVector) {
       safeSetType(gts, GeoTimeSerie.TYPE.DOUBLE);
     }
 
-    if (null != booleanField) {
+    if (null != booleanVector) {
       safeSetType(gts, GeoTimeSerie.TYPE.BOOLEAN);
     }
 
-    if (null != stringField) {
+    if (null != stringVector) {
       safeSetType(gts, GeoTimeSerie.TYPE.STRING);
     }
 
@@ -603,45 +602,45 @@ public class ArrowAdapterHelper {
 
       for (int i = 0; i < root.getRowCount(); i++) {
 
-        timestampField.getReader().setPosition(i);
-        long tick = timestampField.getReader().readLong().longValue();
+        timestampVector.getReader().setPosition(i);
+        long tick = timestampVector.getReader().readLong().longValue();
         if (timeFactor != 1.0D) {
           tick = new Double(tick * timeFactor).longValue();
         }
 
         long location = GeoTimeSerie.NO_LOCATION;
-        if (null != latitudeField && null != longitudeField) {
-          latitudeField.getReader().setPosition(i);
-          longitudeField.getReader().setPosition(i);
-          location = GeoXPLib.toGeoXPPoint(latitudeField.getReader().readFloat(), longitudeField.getReader().readFloat());
+        if (null != latitudeVector && null != longitudeVector) {
+          latitudeVector.getReader().setPosition(i);
+          longitudeVector.getReader().setPosition(i);
+          location = GeoXPLib.toGeoXPPoint(latitudeVector.getReader().readFloat(), longitudeVector.getReader().readFloat());
         }
 
         long elevation = GeoTimeSerie.NO_ELEVATION;
-        if (null != elevationField) {
-          elevationField.getReader().setPosition(i);
-          elevation = elevationField.getReader().readLong();
+        if (null != elevationVector) {
+          elevationVector.getReader().setPosition(i);
+          elevation = elevationVector.getReader().readLong();
         }
 
         Object value;
         switch (gts.getType()) {
           case LONG:
-            longField.getReader().setPosition(i);
-            value = longField.getReader().readObject();
+            longVector.getReader().setPosition(i);
+            value = longVector.getReader().readObject();
             break;
 
           case DOUBLE:
-            doubleField.getReader().setPosition(i);
-            value = doubleField.getReader().readObject();
+            doubleVector.getReader().setPosition(i);
+            value = doubleVector.getReader().readObject();
             break;
 
           case BOOLEAN:
-            booleanField.getReader().setPosition(i);
-            value = booleanField.getReader().readObject();
+            booleanVector.getReader().setPosition(i);
+            value = booleanVector.getReader().readObject();
             break;
 
           case STRING:
-            stringField.getReader().setPosition(i);
-            value = stringField.getReader().readObject();
+            stringVector.getReader().setPosition(i);
+            value = stringVector.getReader().readObject();
             break;
 
           default: throw new WarpScriptException("Can't define GTS type of input arrow stream");
@@ -654,10 +653,158 @@ public class ArrowAdapterHelper {
     return gts;
   }
 
-  private static GTSEncoder arrowStreamToGtsEncoder(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
-    throw new WarpScriptException("Not yet implemented");
+  private enum ENCODER_VALUE_TYPE{
+    LONG,
+    DOUBLE,
+    //BIG_DECIMAL,
+    BOOLEAN,
+    UTF8,
+    BINARY
   }
 
+  private static GTSEncoder arrowStreamToGtsEncoder(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+
+    Schema schema = root.getSchema();
+    if (!TYPEOF.typeof(GTSEncoder.class).equals(schema.getCustomMetadata().get(TYPE))) {
+      throw new WarpScriptException("Tried to convert a GTSENCODER but input is not a GTSENCODER.");
+    }
+
+    GTSEncoder encoder =  new GTSEncoder();
+    encoder.setMetadata(retrieveGtsMetadata(schema));
+
+    //
+    // Retrieve fields
+    //
+
+    FieldVector timestampVector = root.getVector(TIMESTAMPS_KEY);
+    FieldVector latitudeVector =  root.getVector(LATITUDE_KEY);
+    FieldVector longitudeVector =  root.getVector(LONGITUDE_KEY);
+    FieldVector elevationVector =  root.getVector(ELEVATION_KEY);
+    FieldVector longVector =  root.getVector(LONG_VALUES_KEY);
+    FieldVector doubleVector =  root.getVector(DOUBLE_VALUES_KEY);
+    //FieldVector bigDecimalValuesVector =  root.getVector(BIGDECIMAL_VALUES_KEY);
+    //FieldVector bigDecimalScalesVector =  root.getVector(BIGDECIMAL_SCALES_KEY);
+    FieldVector booleanVector =  root.getVector(BOOLEAN_VALUES_KEY);
+    FieldVector utf8Vector =  root.getVector(STRING_VALUES_KEY);
+    FieldVector bytesVector =  root.getVector(BYTES_VALUES_KEY);
+
+    //
+    // Retrieve time unit per seconds
+    //
+
+    long stu = Long.valueOf(schema.getCustomMetadata().get(STU)).longValue();
+    double timeFactor = new Double(stu) / Constants.TIME_UNITS_PER_S;
+
+    //
+    // Read data points
+    //
+
+    while (reader.loadNextBatch()) {
+
+      for (int i = 0; i < root.getRowCount(); i++) {
+
+        timestampVector.getReader().setPosition(i);
+
+        if (null == timestampVector.getReader().readLong()) {
+          System.out.println("Failed index: " + i);
+        }
 
 
+        long tick = timestampVector.getReader().readLong().longValue();
+        if (timeFactor != 1.0D) {
+          tick = new Double(tick * timeFactor).longValue();
+        }
+
+        long location = GeoTimeSerie.NO_LOCATION;
+        if (null != latitudeVector && null != longitudeVector) {
+          latitudeVector.getReader().setPosition(i);
+          longitudeVector.getReader().setPosition(i);
+          location = GeoXPLib.toGeoXPPoint(latitudeVector.getReader().readFloat(), longitudeVector.getReader().readFloat());
+        }
+
+        long elevation = GeoTimeSerie.NO_ELEVATION;
+        if (null != elevationVector) {
+          elevationVector.getReader().setPosition(i);
+          elevation = elevationVector.getReader().readLong();
+        }
+
+        //
+        // Value
+        //
+
+        ENCODER_VALUE_TYPE type = null;
+        Object value;
+        Object read;
+
+        longVector.getReader().setPosition(i);
+        value = longVector.getReader().readObject();
+        if (null != value) {
+          type = ENCODER_VALUE_TYPE.LONG;
+        }
+
+        doubleVector.getReader().setPosition(i);
+        read = doubleVector.getReader().readObject();
+        if (null != read) {
+          if (null != type) {
+            throw new WarpScriptException("GTS encoder received a non binary value with multiple types.");
+          }
+
+          value = read;
+          type = ENCODER_VALUE_TYPE.DOUBLE;
+        }
+
+        doubleVector.getReader().setPosition(i);
+        read = doubleVector.getReader().readObject();
+        if (null != read) {
+          if (null != type) {
+            throw new WarpScriptException("GTS encoder received a non binary value with multiple types.");
+          }
+
+          value = read;
+          type = ENCODER_VALUE_TYPE.DOUBLE;
+        }
+
+        booleanVector.getReader().setPosition(i);
+        read = booleanVector.getReader().readObject();
+        if (null != read) {
+          if (null != type) {
+            throw new WarpScriptException("GTS encoder received a non binary value with multiple types.");
+          }
+
+          value = read;
+          type = ENCODER_VALUE_TYPE.BOOLEAN;
+        }
+
+        utf8Vector.getReader().setPosition(i);
+        read = utf8Vector.getReader().readObject();
+        if (null != read) {
+          if (null != type) {
+            throw new WarpScriptException("GTS encoder received a non binary value with multiple types.");
+          }
+
+          value = read;
+          type = ENCODER_VALUE_TYPE.UTF8;
+        }
+
+        bytesVector.getReader().setPosition(i);
+        read = bytesVector.getReader().readObject();
+        if (null != read) {
+          if (null != type) {
+            throw new WarpScriptException("GTS encoder received a non binary value with multiple types.");
+          }
+
+          value = read;
+          type = ENCODER_VALUE_TYPE.BINARY;
+        }
+
+        if (null == value) {
+          throw new WarpScriptException("Can not define type of encoded value.");
+        }
+
+        encoder.addValue(tick, location, elevation, value);
+      }
+    }
+
+    return encoder;
+  }
 }

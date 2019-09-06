@@ -18,6 +18,7 @@ package arrow;
 import com.geoxp.GeoXPLib;
 import com.vividsolutions.jts.util.Assert;
 import io.warp10.WarpConfig;
+import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
@@ -94,6 +95,56 @@ public class ArrowExtensionTest {
       Assert.equals(GTSHelper.elevationAtIndex(gts, i), GTSHelper.elevationAtIndex(gts_res, i));
       Assert.equals(GTSHelper.valueAtIndex(gts, i), GTSHelper.valueAtIndex(gts_res, i));
     }
+  }
 
+  @Test
+  public void roundTripEncoderViaLongGTS() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+
+    int size = 100000;
+    GeoTimeSerie gts = new GeoTimeSerie(size);
+
+    long[] ticks = new long[size];
+    long[] location = new long[size];
+    long[] elevation = new long[size];
+    long[] longs = new long[size];
+
+    for (int i = 0; i < size; i++) {
+      ticks[i] = i * Constants.TIME_UNITS_PER_S;
+      location[i] = rng.nextLong();
+      elevation[i] = rng.nextLong();
+      longs[i] = rng.nextLong();
+    }
+
+    gts.reset(ticks, location, elevation, longs, size);
+
+    gts.setName("doubleGTS");
+    stack.push(gts);
+    stack.exec("{ 'type' 'DOUBLE' } RELABEL");
+
+    stack.exec(WarpScriptLib.ASENCODERS);
+    stack.exec(ArrowExtension.TOARROW);
+    stack.exec(ArrowExtension.ARROWTO);
+    stack.exec(WarpScriptLib.TOGTS);
+    stack.exec("'LONG' GET");
+
+    GeoTimeSerie gts_res = (GeoTimeSerie) stack.get(0);
+    stack.exec("TYPEOF 'GTS' == ASSERT");
+
+    Assert.equals(gts.size(), gts_res.size());
+    Assert.isTrue(gts.getMetadata().equals(gts_res.getMetadata()));
+
+    for (int i = 0; i < gts.size(); i++) {
+
+      Assert.equals(GTSHelper.tickAtIndex(gts,i), GTSHelper.tickAtIndex(gts_res, i));
+      double[] latlon = GeoXPLib.fromGeoXPPoint(GTSHelper.locationAtIndex(gts, i));
+      double[] latlon_res = GeoXPLib.fromGeoXPPoint(GTSHelper.locationAtIndex(gts_res, i));
+      Assert.isTrue(doubleEquality(latlon[0], latlon_res[0]));
+      Assert.isTrue(doubleEquality(latlon[1], latlon_res[1]));
+      Assert.equals(GTSHelper.elevationAtIndex(gts, i), GTSHelper.elevationAtIndex(gts_res, i));
+      Assert.equals(GTSHelper.valueAtIndex(gts, i), GTSHelper.valueAtIndex(gts_res, i));
+    }
   }
 }
