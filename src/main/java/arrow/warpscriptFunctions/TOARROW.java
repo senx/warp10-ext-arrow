@@ -48,7 +48,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
   public TOARROW(String name) {
     super(name);
 
-    getDocstring().append("TODO");
+    getDocstring().append("Encode an object into a byte array in Arrow streaming format.");
 
     args =  new ArgumentsBuilder()
       .addArgument(Object.class, IN, "The object to be converted: GTS, Encoder, String or Byte array.")

@@ -46,8 +46,10 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public ARROWTO(String name) {
     super(name);
 
+    getDocstring().append("Decode a byte array in Arrow streaming format.");
+
     args = new ArgumentsBuilder()
-      .addArgument(byte[].class, BYTES, "Arrow stream to be decoded. See https://arrow.apache.org/docs/ipc.html." )
+      .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
       .build();
 
     output = new ArgumentsBuilder()

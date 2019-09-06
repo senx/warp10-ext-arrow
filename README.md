@@ -2,11 +2,11 @@
 
 Provides WarpScript functions for conversion to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).
 
-Can convert GTS, Encoder, [GTS], [Encoder], .... (todo description)
+Can currently convert GTS and GTSENCODER. May support more WarpScript types if needed.
 
 <pre>
-TOARROW    // todo description
-ARROWTO    // todo description
+TOARROW    // Encode an object into a byte array in Arrow streaming format.
+ARROWTO    // Decode a byte array in Arrow streaming format.
 </pre>
 
 #### Build notes
