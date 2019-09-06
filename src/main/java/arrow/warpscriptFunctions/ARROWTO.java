@@ -23,6 +23,8 @@ import java.io.ByteArrayInputStream;
 import java.nio.channels.Channels;
 import java.util.Map;
 
+import static arrow.ArrowAdapterHelper.fromArrowStream;
+
 /**
  * Decode an object from an Arrow stream
  */
@@ -31,8 +33,14 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   private final Arguments args;
   private static final String BYTES = "bytes";
 
+  private final Arguments output;
+  private static final String RESULT = "result";
+
   public Arguments getArguments() {
     return args;
+  }
+  public Arguments getOutput() {
+    return output;
   }
 
   public ARROWTO(String name) {
@@ -42,13 +50,17 @@ public class ARROWTO extends FormattedWarpScriptFunction {
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded. See https://arrow.apache.org/docs/ipc.html." )
       .build();
 
+    output = new ArgumentsBuilder()
+      .addArgument(Object.class, RESULT, "The decoded object. GTS or ENCODER.")
+      .build();
+
   }
 
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
 
     byte[] in = (byte[]) params.get(BYTES);
 
-    stack.push(Channels.newChannel(new ByteArrayInputStream(in)));
+    stack.push(fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in))));
 
     return stack;
   }

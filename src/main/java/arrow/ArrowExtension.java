@@ -18,6 +18,7 @@ package arrow;
 
 import arrow.warpscriptFunctions.ARROWTO;
 import arrow.warpscriptFunctions.TOARROW;
+import io.warp10.script.NamedWarpScriptFunction;
 import io.warp10.warp.sdk.WarpScriptExtension;
 
 import java.util.HashMap;
@@ -27,13 +28,19 @@ public class ArrowExtension extends WarpScriptExtension {
 
   private static final Map<String, Object> functions;
 
+  public static final String TOARROW = "->ARROW";
+  public static final String ARROWTO = "ARROW->";
+
   static {
     functions = new HashMap<String, Object>();
 
-    functions.put("->ARROW", new TOARROW("->ARROW"));
-    functions.put("ARROW->", new ARROWTO("ARROW->"));
+    addFunction(new TOARROW(TOARROW));
+    addFunction(new ARROWTO(ARROWTO));
   }
 
+  private static void addFunction(NamedWarpScriptFunction fun) {
+    functions.put(fun.getName(), fun);
+  }
   public Map<String, Object> getFunctions() { return functions; }
   public static Map<String, Object> staticGetFunctions() { return functions; }
 }

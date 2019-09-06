@@ -174,12 +174,33 @@ public class ArrowAdapterHelper {
     Map<String, String> metadata = schema.getCustomMetadata();
 
     gtsMeta.setName(metadata.get(Metadata._Fields.NAME.getFieldName()));
-    gtsMeta.setLabels((Map<String, String>) fromJson(metadata.get(Metadata._Fields.LABELS.getFieldName())));
-    gtsMeta.setClassId(Long.valueOf(metadata.get(Metadata._Fields.CLASS_ID.getFieldName())).longValue());
-    gtsMeta.setLabelsId(Long.valueOf(metadata.get(Metadata._Fields.LABELS_ID.getFieldName())).longValue());
-    gtsMeta.setAttributes((Map<String, String>) fromJson(metadata.get(Metadata._Fields.ATTRIBUTES.getFieldName())));
+
+    String labels = metadata.get(Metadata._Fields.LABELS.getFieldName());
+    if (null != labels) {
+      gtsMeta.setLabels((Map<String, String>) fromJson(labels));
+    }
+
+    String classId = metadata.get(Metadata._Fields.CLASS_ID.getFieldName());
+    if (null != classId) {
+      gtsMeta.setClassId(Long.valueOf(classId).longValue());
+    }
+
+    String labelsId = metadata.get(Metadata._Fields.LABELS_ID.getFieldName());
+    if (null != labelsId) {
+      gtsMeta.setLabelsId(Long.valueOf(labelsId).longValue());
+    }
+
+    String attributes = metadata.get(Metadata._Fields.ATTRIBUTES.getFieldName());
+    if (null != attributes) {
+      gtsMeta.setAttributes((Map<String, String>) fromJson(attributes));
+    }
+
     gtsMeta.setSource(metadata.get(Metadata._Fields.SOURCE.getFieldName()));
-    gtsMeta.setLastActivity(Long.valueOf(metadata.get(Metadata._Fields.LAST_ACTIVITY.getFieldName())).longValue());
+
+    String lastActivity = metadata.get(Metadata._Fields.LAST_ACTIVITY.getFieldName());
+    if (null != lastActivity) {
+      gtsMeta.setLastActivity(Long.valueOf(lastActivity).longValue());
+    }
 
     return gtsMeta;
   }
@@ -259,6 +280,10 @@ public class ArrowAdapterHelper {
    * Convert a GTS to an output stream in arrow format
    */
   public static void gtstoArrowStream(GeoTimeSerie gts, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
+
+    if (gts.size() == 0) {
+      return;
+    }
 
     VectorSchemaRoot root = VectorSchemaRoot.create(createGtsSchema(gts), new RootAllocator(Integer.MAX_VALUE));
 
@@ -476,10 +501,10 @@ public class ArrowAdapterHelper {
 
       VectorSchemaRoot root = reader.getVectorSchemaRoot();
 
-      if (TYPEOF.typeof(GeoTimeSerie.class) != root.getSchema().getCustomMetadata().get(TYPE)) {
+      if (TYPEOF.typeof(GeoTimeSerie.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
         res = arrowStreamToGTS(root, reader);
 
-      } else if (TYPEOF.typeof(GTSEncoder.class) != root.getSchema().getCustomMetadata().get(TYPE)) {
+      } else if (TYPEOF.typeof(GTSEncoder.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
         res = arrowStreamToGtsEncoder(root, reader);
 
       } else {
@@ -507,8 +532,8 @@ public class ArrowAdapterHelper {
   private static GeoTimeSerie arrowStreamToGTS(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
 
     Schema schema = root.getSchema();
-    if (TYPEOF.typeof(GeoTimeSerie.class) != schema.getCustomMetadata().get(TYPE)) {
-      throw new WarpScriptException("Not a Geo Time Series.");
+    if (!TYPEOF.typeof(GeoTimeSerie.class).equals(schema.getCustomMetadata().get(TYPE))) {
+      throw new WarpScriptException("Tried to convert a GTS but input is not a GTS.");
     }
 
     GeoTimeSerie gts =  new GeoTimeSerie();
