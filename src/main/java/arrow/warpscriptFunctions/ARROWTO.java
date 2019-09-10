@@ -23,7 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.channels.Channels;
 import java.util.Map;
 
-import static arrow.ArrowAdapterHelper.fromArrowStream;
+import arrow.ArrowAdapterHelper;
 
 /**
  * Decode an object from an Arrow stream
@@ -46,7 +46,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public ARROWTO(String name) {
     super(name);
 
-    getDocstring().append("Decode a byte array in Arrow streaming format.");
+    getDocstring().append("Decode a byte array that is in Arrow streaming format.");
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
@@ -62,7 +62,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
     byte[] in = (byte[]) params.get(BYTES);
 
-    stack.push(fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in))));
+    stack.push(ArrowAdapterHelper.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in))));
 
     return stack;
   }
