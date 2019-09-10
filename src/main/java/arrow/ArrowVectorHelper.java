@@ -61,27 +61,27 @@ import java.util.Map;
  *
  * TODO(JC): maybe refactor into multiple classes (one reader/writer per subtype and type).
  */
-public class ArrowAdapterHelper {
+public class ArrowVectorHelper {
 
-  final static String TIMESTAMPS_KEY = "timestamp";
-  final static String LONG_VALUES_KEY = TYPEOF.typeof(Long.class);
-  final static String DOUBLE_VALUES_KEY = TYPEOF.typeof(Double.class);
-  //final static String BIGDECIMAL_VALUES_KEY = "BIGDECIMAL.CONTENT";
-  //final static String BIGDECIMAL_SCALES_KEY = "BIGDECIMAL.SCALE";
-  final static String BOOLEAN_VALUES_KEY = TYPEOF.typeof(Boolean.class);
-  final static String STRING_VALUES_KEY = TYPEOF.typeof(String.class);
-  final static String BYTES_VALUES_KEY = TYPEOF.typeof(byte[].class);
-  final static String LATITUDE_KEY = "latitude";
-  final static String LONGITUDE_KEY = "longitude";
-  final static String ELEVATION_KEY = "elevation";
+  public final static String TIMESTAMPS_KEY = "timestamp";
+  public final static String LONG_VALUES_KEY = TYPEOF.typeof(Long.class);
+  public final static String DOUBLE_VALUES_KEY = TYPEOF.typeof(Double.class);
+  //public final static String BIGDECIMAL_VALUES_KEY = "BIGDECIMAL.CONTENT";
+  //public final static String BIGDECIMAL_SCALES_KEY = "BIGDECIMAL.SCALE";
+  public final static String BOOLEAN_VALUES_KEY = TYPEOF.typeof(Boolean.class);
+  public final static String STRING_VALUES_KEY = TYPEOF.typeof(String.class);
+  public final static String BYTES_VALUES_KEY = TYPEOF.typeof(byte[].class);
+  public final static String LATITUDE_KEY = "latitude";
+  public final static String LONGITUDE_KEY = "longitude";
+  public final static String ELEVATION_KEY = "elevation";
 
-  final static String BUCKETSPAN = "bucketspan";
-  final static String BUCKETCOUNT = "bucketcount";
-  final static String LASTBUCKET = "lastbucket";
+  public final static String BUCKETSPAN = "bucketspan";
+  public final static String BUCKETCOUNT = "bucketcount";
+  public final static String LASTBUCKET = "lastbucket";
 
-  final static String TYPE = "WarpScriptType";
-  final static String REV = "WarpScriptVersion";
-  final static String STU = "WarpScriptSecondsPerTimeUnit";
+  public final static String TYPE = "WarpScriptType";
+  public final static String REV = "WarpScriptVersion";
+  public final static String STU = "WarpScriptSecondsPerTimeUnit";
 
   //
   // Fields of arrow schemas
@@ -168,7 +168,7 @@ public class ArrowAdapterHelper {
    * @param schema
    * @return
    */
-  private static Metadata retrieveGtsMetadata(Schema schema) {
+  static Metadata retrieveGtsMetadata(Schema schema) {
 
     Metadata gtsMeta = new Metadata();
     Map<String, String> metadata = schema.getCustomMetadata();
@@ -520,7 +520,7 @@ public class ArrowAdapterHelper {
    return res;
   }
 
-  private static void safeSetType(GeoTimeSerie gts, GeoTimeSerie.TYPE type) throws WarpScriptException {
+  static void safeSetType(GeoTimeSerie gts, GeoTimeSerie.TYPE type) throws WarpScriptException {
     if (GeoTimeSerie.TYPE.UNDEFINED != gts.getType()) {
       throw new WarpScriptException("Tried to set type of a GTS that already has a type.");
     } else {
@@ -575,7 +575,8 @@ public class ArrowAdapterHelper {
     // Retrieve time unit per seconds
     //
 
-    long stu = Long.valueOf(schema.getCustomMetadata().get(STU)).longValue();
+    Object stu_holder = schema.getCustomMetadata().get(STU);
+    long stu = stu_holder != null ? Long.valueOf((String) stu_holder).longValue() : Constants.TIME_UNITS_PER_S;
     double timeFactor = new Double(stu) / Constants.TIME_UNITS_PER_S;
 
     //
@@ -692,7 +693,8 @@ public class ArrowAdapterHelper {
     // Retrieve time unit per seconds
     //
 
-    long stu = Long.valueOf(schema.getCustomMetadata().get(STU)).longValue();
+    Object stu_holder = schema.getCustomMetadata().get(STU);
+    long stu = stu_holder != null ? Long.valueOf((String) stu_holder).longValue() : Constants.TIME_UNITS_PER_S;
     double timeFactor = new Double(stu) / Constants.TIME_UNITS_PER_S;
 
     //
