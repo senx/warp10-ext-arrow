@@ -16,7 +16,7 @@
 
 package arrow.warpscriptFunctions;
 
-import arrow.ArrowAdapterHelper;
+import arrow.ArrowVectorHelper;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
@@ -82,7 +82,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
       }
 
       ByteArrayOutputStream out =  new ByteArrayOutputStream();
-      ArrowAdapterHelper.gtstoArrowStream(gts, nTicksPerBatch, out);
+      ArrowVectorHelper.gtstoArrowStream(gts, nTicksPerBatch, out);
       stack.push(out.toByteArray());
 
     } else if (in instanceof GTSEncoder) {
@@ -93,7 +93,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
       }
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ArrowAdapterHelper.gtsEncodertoArrowStream(encoder, nTicksPerBatch, out);
+      ArrowVectorHelper.gtsEncodertoArrowStream(encoder, nTicksPerBatch, out);
       stack.push(out.toByteArray());
 
     } else if (in instanceof List) {
