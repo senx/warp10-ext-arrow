@@ -887,7 +887,7 @@ public class ArrowVectorHelper {
 
             case FixedSizeBinary:
             case Decimal:
-              if (true) throw new WarpScriptException("Arrow type not yet supported"); // TODO
+              if (true) throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not yet supported"); // TODO
               break;
 
             case Date:
@@ -895,7 +895,7 @@ public class ArrowVectorHelper {
             case Timestamp:
             case Interval:
             case Duration:
-              if (true) throw new WarpScriptException("Arrow type not yet supported"); // maybe should support ?
+              if (true) throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not yet supported"); // maybe should support ?
               break;
 
             case Null:
@@ -905,7 +905,7 @@ public class ArrowVectorHelper {
             case Union:
             case Map:
             case NONE:
-              if (true) throw new WarpScriptException("Arrow type not supported");
+              if (true) throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not supported");
               break;
           }
         }

@@ -51,7 +51,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
     getDocstring().append("Encode an object into a byte array in Arrow streaming format.");
 
     args =  new ArgumentsBuilder()
-      .addArgument(Object.class, IN, "The object to be converted: GTS, Encoder, String or Byte array.")
+      .addArgument(Object.class, IN, "The object to be converted: GTS, GtsEncoder, String or Byte array.")
       .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
 
@@ -99,12 +99,12 @@ public class TOARROW extends FormattedWarpScriptFunction {
     } else if (in instanceof List) {
 
       // table extends ArrayList<GeoTimeSeries> ?
-      throw new WarpScriptException(getName() + ": TODO ?");
+      throw new WarpScriptException(getName() + ": unsupported input type"); // TODO ?
 
     } else if (in instanceof Map) {
 
-      // Map<List<Object>> ....
-      throw new WarpScriptException(getName() + ": TODO ?");
+      // Map<List<Object>> ... ?
+      throw new WarpScriptException(getName() + ": unsupported input type"); // TODO ?
 
     } else {
 

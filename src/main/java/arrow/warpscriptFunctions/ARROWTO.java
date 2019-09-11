@@ -27,7 +27,7 @@ import java.util.Map;
 import arrow.ArrowVectorHelper;
 
 /**
- * Decode an object from an Arrow stream
+ * Decode an Arrow stream
  */
 public class ARROWTO extends FormattedWarpScriptFunction {
 
@@ -53,7 +53,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
-      .addOptionalArgument(Boolean.class, DEFAULT, "Always output metadata and vector fields (ignore WarpScriptType).", false)
+      .addOptionalArgument(Boolean.class, DEFAULT, "Always output metadata and vector fields (ignore WarpScriptType). Default to false.", false)
       .build();
 
     output = new ArgumentsBuilder()
