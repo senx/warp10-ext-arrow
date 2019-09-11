@@ -29,6 +29,8 @@ import org.junit.Test;
 
 import java.io.StringReader;
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class ArrowExtensionTest {
@@ -74,7 +76,7 @@ public class ArrowExtensionTest {
 
     gts.setName("doubleGTS");
     stack.push(gts);
-    stack.exec("{ 'type' 'DOUBLE' } RELABEL");
+    stack.exec("{ 'type' 'LONG' } RELABEL");
 
     stack.exec(ArrowExtension.TOARROW);
     stack.exec(ArrowExtension.ARROWTO);
@@ -122,7 +124,7 @@ public class ArrowExtensionTest {
 
     gts.setName("doubleGTS");
     stack.push(gts);
-    stack.exec("{ 'type' 'DOUBLE' } RELABEL");
+    stack.exec("{ 'type' 'LONG' } RELABEL");
 
     stack.exec(WarpScriptLib.ASENCODERS);
     stack.exec(ArrowExtension.TOARROW);
@@ -135,6 +137,66 @@ public class ArrowExtensionTest {
 
     Assert.equals(gts.size(), gts_res.size());
     Assert.isTrue(gts.getMetadata().equals(gts_res.getMetadata()));
+
+    for (int i = 0; i < gts.size(); i++) {
+
+      Assert.equals(GTSHelper.tickAtIndex(gts,i), GTSHelper.tickAtIndex(gts_res, i));
+      double[] latlon = GeoXPLib.fromGeoXPPoint(GTSHelper.locationAtIndex(gts, i));
+      double[] latlon_res = GeoXPLib.fromGeoXPPoint(GTSHelper.locationAtIndex(gts_res, i));
+      Assert.isTrue(doubleEquality(latlon[0], latlon_res[0]));
+      Assert.isTrue(doubleEquality(latlon[1], latlon_res[1]));
+      Assert.equals(GTSHelper.elevationAtIndex(gts, i), GTSHelper.elevationAtIndex(gts_res, i));
+      Assert.equals(GTSHelper.valueAtIndex(gts, i), GTSHelper.valueAtIndex(gts_res, i));
+    }
+  }
+
+  @Test
+  public void roundTripLongGTSDefaultOutput() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+
+    int size = 100000;
+    GeoTimeSerie gts = new GeoTimeSerie(size);
+
+    long[] ticks = new long[size];
+    long[] location = new long[size];
+    long[] elevation = new long[size];
+    long[] longs = new long[size];
+
+    for (int i = 0; i < size; i++) {
+      ticks[i] = i * Constants.TIME_UNITS_PER_S;
+      location[i] = rng.nextLong();
+      elevation[i] = rng.nextLong();
+      longs[i] = rng.nextLong();
+    }
+
+    gts.reset(ticks, location, elevation, longs, size);
+
+    gts.setName("doubleGTS");
+    stack.push(gts);
+    stack.exec("{ 'type' 'LONG' } RELABEL");
+
+    stack.exec(ArrowExtension.TOARROW);
+
+    stack.exec("'in' STORE { 'bytes' $in 'default' true }");
+    stack.exec(ArrowExtension.ARROWTO);
+
+    stack.dump(stack.depth());
+
+    Map<String, List> res = (Map) stack.pop();
+    stack.exec("TYPEOF 'MAP' == ASSERT");
+
+    stack.push(res.get(ArrowVectorHelper.TIMESTAMPS_KEY));
+    stack.push(res.get(ArrowVectorHelper.LATITUDE_KEY));
+    stack.push(res.get(ArrowVectorHelper.LONGITUDE_KEY));
+    stack.push(res.get(ArrowVectorHelper.ELEVATION_KEY));
+    stack.push(res.get(ArrowVectorHelper.LONG_VALUES_KEY));
+    stack.exec(WarpScriptLib.MAKEGTS);
+
+    GeoTimeSerie gts_res = (GeoTimeSerie) stack.pop();
+
+    Assert.equals(gts.size(), gts_res.size());
 
     for (int i = 0; i < gts.size(); i++) {
 

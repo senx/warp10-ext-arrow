@@ -21,6 +21,7 @@ import io.warp10.script.formatted.FormattedWarpScriptFunction;
 
 import java.io.ByteArrayInputStream;
 import java.nio.channels.Channels;
+import java.util.List;
 import java.util.Map;
 
 import arrow.ArrowVectorHelper;
@@ -32,6 +33,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
   private final Arguments args;
   private static final String BYTES = "bytes";
+  private static final String DEFAULT = "default";
 
   private final Arguments output;
   private static final String RESULT = "result";
@@ -46,14 +48,16 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public ARROWTO(String name) {
     super(name);
 
-    getDocstring().append("Decode a byte array that is in Arrow streaming format.");
+    getDocstring().append("Decode an Arrow stream. If its schema metadata has the field WarpScriptType, then this function pushes onto the stack an object of that type (GTS or GTSENCODER)." +
+      " Otherwise, it pushes the metadata (a MAP), then the field vectors (a MAP of LIST).");
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
+      .addOptionalArgument(Boolean.class, DEFAULT, "Always output metadata and vector fields (ignore WarpScriptType).", false)
       .build();
 
     output = new ArgumentsBuilder()
-      .addArgument(Object.class, RESULT, "The decoded object. GTS or ENCODER.")
+      .addArgument(Object.class, RESULT, "The decoded object. GTS, GTSENCODER or metadata (a LIST) and vector fields (a MAP of LIST).")
       .build();
 
   }
@@ -61,8 +65,16 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
 
     byte[] in = (byte[]) params.get(BYTES);
+    boolean mapList = Boolean.TRUE.equals(params.get(DEFAULT));
+    Object res = ArrowVectorHelper.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList);
 
-    stack.push(ArrowVectorHelper.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in))));
+    if (res instanceof List) {
+      for (Object item: (List) res) {
+        stack.push(item);
+      }
+    } else {
+      stack.push(res);
+    }
 
     return stack;
   }

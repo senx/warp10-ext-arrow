@@ -52,6 +52,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -488,7 +489,7 @@ public class ArrowVectorHelper {
   // Readers
   //
 
-  public static Object fromArrowStream(ReadableByteChannel in) throws WarpScriptException {
+  public static Object fromArrowStream(ReadableByteChannel in, boolean mapListOutput) throws WarpScriptException {
 
     Object res = null;
 
@@ -500,17 +501,17 @@ public class ArrowVectorHelper {
 
       VectorSchemaRoot root = reader.getVectorSchemaRoot();
 
-      if (TYPEOF.typeof(GeoTimeSerie.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
+      if (!mapListOutput && TYPEOF.typeof(GeoTimeSerie.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
         res = arrowStreamToGTS(root, reader);
 
-      } else if (TYPEOF.typeof(GTSEncoder.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
+      } else if (!mapListOutput && TYPEOF.typeof(GTSEncoder.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
         res = arrowStreamToGtsEncoder(root, reader);
 
       } else {
 
-        //TODO(jc): should return metadata and a map of list (per field)
-
-        throw new WarpScriptException("Unsupported type right now.");
+        res = new ArrayList<>();
+        ((ArrayList) res).add(root.getSchema().getCustomMetadata());
+        ((ArrayList) res).add(arrowStreamToMapOfLists(root, reader));
       }
 
     } catch (IOException ioe) {
@@ -808,5 +809,108 @@ public class ArrowVectorHelper {
     }
 
     return encoder;
+  }
+
+  private static Map<String, List> arrowStreamToMapOfLists(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+    Map<String, List> res = new HashMap<String, List>();
+    Schema schema = root.getSchema();
+
+    while (reader.loadNextBatch()) {
+
+      for (int i = 0; i < root.getRowCount(); i++) {
+
+        for (Field field: schema.getFields()) {
+          String name = field.getName();
+          root.getVector(name).getReader().setPosition(i);
+
+          switch (field.getFieldType().getType().getTypeID()) {
+
+            case Int:
+              if (null == res.get(name)) {
+                res.put(name, new ArrayList<Long>());
+              }
+              int bitWidth = ((ArrowType.Int) field.getFieldType().getType()).getBitWidth();
+              if (64 == bitWidth) {
+                res.get(name).add(root.getVector(name).getReader().readLong().longValue());
+              } else if (32 == bitWidth) {
+                res.get(name).add(root.getVector(name).getReader().readInteger().longValue());
+              } else if (16 == bitWidth) {
+                res.get(name).add(root.getVector(name).getReader().readShort().longValue());
+              } else {
+                throw new WarpScriptException("Int bit width other than 16, 32 or 64 are not supported.");
+              }
+              break;
+
+            case FloatingPoint:
+
+              if (null == res.get(name)) {
+                res.put(name, new ArrayList<Double>());
+              }
+              switch (((ArrowType.FloatingPoint) field.getFieldType().getType()).getPrecision()) {
+                case HALF:
+                  if (true) throw new WarpScriptException("Floating point precision other than 32 or 64 bits are not supported.");
+                  break;
+
+                case SINGLE: // 32-bit
+                  res.get(name).add(root.getVector(name).getReader().readFloat().doubleValue());
+                  break;
+
+                case DOUBLE: // 64-bit
+                  res.get(name).add(root.getVector(name).getReader().readDouble().doubleValue());
+                  break;
+              }
+              break;
+
+            case Utf8:
+
+              if (null == res.get(name)) {
+                res.put(name, new ArrayList<String>());
+              }
+              res.get(name).add(root.getVector(name).getReader().readText().toString());
+              break;
+
+            case Binary:
+
+              if (null == res.get(name)) {
+                res.put(name, new ArrayList<String>());
+              }
+              res.get(name).add(Base64.getEncoder().encodeToString(root.getVector(name).getReader().readByteArray()));
+              break;
+
+            case Bool:
+
+              if (null == res.get(name)) {
+                res.put(name, new ArrayList<String>());
+              }
+              res.get(name).add(root.getVector(name).getReader().readByte() == 1);
+              break;
+
+            case FixedSizeBinary:
+            case Decimal:
+              if (true) throw new WarpScriptException("Arrow type not yet supported"); // TODO
+              break;
+
+            case Date:
+            case Time:
+            case Timestamp:
+            case Interval:
+            case Duration:
+              if (true) throw new WarpScriptException("Arrow type not yet supported"); // maybe should support ?
+              break;
+
+            case Null:
+            case Struct:
+            case List:
+            case FixedSizeList:
+            case Union:
+            case Map:
+            case NONE:
+              if (true) throw new WarpScriptException("Arrow type not supported");
+              break;
+          }
+        }
+      }
+    }
+    return  res;
   }
 }
