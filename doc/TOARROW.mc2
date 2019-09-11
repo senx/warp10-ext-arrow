@@ -1,0 +1,31 @@
+{
+'name' '->ARROW' 
+'since' '2.1' 
+'deprecated' '' 
+'deleted' '' 
+'version' 'all' 
+'tags' [ 'arrow' ] 
+'desc' 'Encode an object into a byte array in Arrow streaming format.' 
+'sig' [ [ [ 'in:OBJECT' ] [ 'result:OBJECT' ] ] [ [ {
+'nTicksPerBatch' 'nTicksPerBatch:LONG' 
+'in' 'in:OBJECT' 
+} ] [ 'result:OBJECT' ] ] ] 
+'params' {
+'nTicksPerBatch' 'The number of data point per batch. Default to full size.' 
+'in' 'The object to be converted: GTS, GtsEncoder, String or Byte array.' 
+'result' 'No documentation provided.' 
+} 
+'related' [ 'ARROWTO' 'TOARROW' ] 
+'examples' [ ] 
+'conf' [ ] 
+} 'infomap' STORE
+<%
+!$infomap INFO
+<%
+'->ARROW' EVAL
+%>
+<% %> <% %> TRY
+%>
+'macro' STORE
+// Unit tests
+$macro

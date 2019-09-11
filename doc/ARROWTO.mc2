@@ -1,0 +1,31 @@
+{
+'name' 'ARROW->' 
+'since' '2.1' 
+'deprecated' '' 
+'deleted' '' 
+'version' 'all' 
+'tags' [ 'arrow' ] 
+'desc' 'Decode an Arrow stream. If its schema metadata has the field WarpScriptType, then this function pushes onto the stack an object of that type (GTS or GTSENCODER). Otherwise, it pushes the metadata (a MAP), then the field vectors (a MAP of LIST).' 
+'sig' [ [ [ 'bytes:BYTES' ] [ 'result:OBJECT' ] ] [ [ {
+'default' 'default:BOOLEAN' 
+'bytes' 'bytes:BYTES' 
+} ] [ 'result:OBJECT' ] ] ] 
+'params' {
+'default' 'Always output metadata and vector fields (ignore WarpScriptType). Default to false.' 
+'bytes' 'Arrow stream to be decoded.' 
+'result' 'The decoded object. GTS, GTSENCODER or metadata (a LIST) and vector fields (a MAP of LIST).' 
+} 
+'related' [ 'ARROWTO' 'TOARROW' ] 
+'examples' [ ] 
+'conf' [ ] 
+} 'infomap' STORE
+<%
+!$infomap INFO
+<%
+'ARROW->' EVAL
+%>
+<% %> <% %> TRY
+%>
+'macro' STORE
+// Unit tests
+$macro
