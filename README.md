@@ -1,6 +1,6 @@
 ### Arrow extension for WarpScript
 
-Provides WarpScript functions for conversions from and to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).
+WarpScript functions for conversions from and to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).
 
 <pre>
 TOARROW    // Encode a GTS, a GTSENCODER, a STRING, or BYTES into Arrow streaming format (BYTES).
