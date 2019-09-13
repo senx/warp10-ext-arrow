@@ -129,7 +129,7 @@ public class ArrowVectorHelper {
    * @param gtsMeta
    * @return
    */
-  private static Map<String, String> extractGtsMetadata(Metadata gtsMeta) {
+  public static Map<String, String> extractGtsMetadata(Metadata gtsMeta) {
 
     Map<String, String> metadata = new HashMap<>();
 
@@ -169,7 +169,7 @@ public class ArrowVectorHelper {
    * @param schema
    * @return
    */
-  static Metadata retrieveGtsMetadata(Schema schema) {
+  public static Metadata retrieveGtsMetadata(Schema schema) {
 
     Metadata gtsMeta = new Metadata();
     Map<String, String> metadata = schema.getCustomMetadata();
@@ -529,7 +529,7 @@ public class ArrowVectorHelper {
     }
   }
 
-  private static GeoTimeSerie arrowStreamToGTS(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static GeoTimeSerie arrowStreamToGTS(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
 
     Schema schema = root.getSchema();
     if (!TYPEOF.typeof(GeoTimeSerie.class).equals(schema.getCustomMetadata().get(TYPE))) {
@@ -664,7 +664,7 @@ public class ArrowVectorHelper {
     BINARY
   }
 
-  private static GTSEncoder arrowStreamToGtsEncoder(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static GTSEncoder arrowStreamToGtsEncoder(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
 
     Schema schema = root.getSchema();
     if (!TYPEOF.typeof(GTSEncoder.class).equals(schema.getCustomMetadata().get(TYPE))) {
@@ -811,7 +811,7 @@ public class ArrowVectorHelper {
     return encoder;
   }
 
-  private static Map<String, List> arrowStreamToMapOfLists(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static Map<String, List> arrowStreamToMapOfLists(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
     Map<String, List> res = new HashMap<String, List>();
     Schema schema = root.getSchema();
 
