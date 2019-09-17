@@ -12,7 +12,7 @@
 } ] [ 'result:OBJECT' ] ] ] 
 'params' {
 'nTicksPerBatch' 'The number of data point per batch. Default to full size.' 
-'in' 'The object to be converted: GTS, GtsEncoder, String or Byte array.' 
+'in' 'The object to be converted: GTS, GTSENCODER, or a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).' 
 'result' 'No documentation provided.' 
 } 
 'related' [ 'ARROWTO' 'TOARROW' ] 
