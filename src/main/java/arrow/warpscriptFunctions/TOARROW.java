@@ -20,10 +20,8 @@ import arrow.ArrowVectorHelper;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
-import io.warp10.script.WarpScriptLib;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
-import io.warp10.script.functions.UNWRAPENCODER;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -59,8 +57,6 @@ public class TOARROW extends FormattedWarpScriptFunction {
       .addArgument(byte[].class, OUT, "The resulting byte stream.")
       .build();
   }
-
-  private static UNWRAPENCODER UNWRAPENCODER = new UNWRAPENCODER(WarpScriptLib.UNWRAPENCODER);
 
   @Override
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
@@ -100,6 +96,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
       Integer commonSize = null;
       for (String key: columns.keySet()) {
+        if (0 == columns.get(key).size()) {
+          continue;
+        }
+
         if (null == commonSize) {
           commonSize = columns.get(key).size();
         } else {
@@ -109,8 +109,12 @@ public class TOARROW extends FormattedWarpScriptFunction {
         }
       }
 
+      if (0 == nTicksPerBatch) {
+        nTicksPerBatch = commonSize;
+      }
+
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ArrowVectorHelper.mapListToArrowStream(pair, nTicksPerBatch, out);
+      ArrowVectorHelper.columnsToArrowStream(pair, nTicksPerBatch, out);
       stack.push(out.toByteArray());
 
     } else {

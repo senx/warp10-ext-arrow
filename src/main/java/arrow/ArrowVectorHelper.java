@@ -485,6 +485,101 @@ public class ArrowVectorHelper {
     }
   }
 
+  /**
+   * Convert a map of columns (Lists) into an Arrow Stream.
+   * The columns must have the same size.
+   * @param input A list of two items: custom metadata and map of columns (assumed to be of same size > 0)
+   * @param out
+   * @throws WarpScriptException
+   */
+  public static void columnsToArrowStream(List input, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
+
+    Map<String, String> customMetadata = new HashMap<String, String>((Map<String, String>) input.get(0));
+    customMetadata.put(TYPE, TYPEOF.typeof(input));
+    customMetadata.put(REV, Revision.REVISION);
+    customMetadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
+
+    Map<String, List> columns = (Map<String, List>) input.get(1);
+    List<Field> fields = new ArrayList<Field>(columns.size());
+    for (String key: columns.keySet()) {
+      Object first = columns.get(key).get(0);
+
+      if (first instanceof Boolean) {
+        fields.add(Field.nullable(key, new ArrowType.Bool()));
+
+      } else if (first instanceof Long) {
+        fields.add(Field.nullable(key,new ArrowType.Int(64, true)));
+
+      } else if (first instanceof Double) {
+        fields.add(Field.nullable(key, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)));
+
+      } else if (first instanceof String) {
+        fields.add(Field.nullable(key, new ArrowType.Utf8()));
+
+      } else if (first instanceof byte[]) {
+        fields.add(Field.nullable(key, new ArrowType.Binary()));
+
+      } else {
+        throw new WarpScriptException("Unsupported field vector type. Support BOOLEAN, LONG, DOUBLE, STRING or BYTES.");
+      }
+    }
+
+    VectorSchemaRoot root = VectorSchemaRoot.create(new Schema(fields, customMetadata), new RootAllocator(Integer.MAX_VALUE));
+
+    //
+    // Feed data to root
+    //
+
+    try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, null, out)) {
+
+      writer.start();
+      root.setRowCount(nTicksPerBatch);
+
+      int count = columns.get(columns.keySet().iterator().next()).size();
+      for (int i = 0; i < count; i++) {
+
+        for (Field field : root.getSchema().getFields()) {
+
+          Object value = columns.get(field.getName()).get(i);
+
+          if (value instanceof Boolean) {
+            ((BitVector) root.getVector(field.getName())).setSafe(i % nTicksPerBatch, (boolean) value ? 1 : 0);
+
+          } else if (value instanceof Long) {
+            ((BigIntVector) root.getVector(field.getName())).setSafe(i % nTicksPerBatch, (long) value);
+
+          } else if (value instanceof Double) {
+            ((Float8Vector) root.getVector(field.getName())).setSafe(i % nTicksPerBatch, (double) value);
+
+          } else if (value instanceof String) {
+            ((VarCharVector) root.getVector(field.getName())).setSafe(i % nTicksPerBatch, new Text((String) value));
+
+          } else if (value instanceof byte[]) {
+            ((VarBinaryVector) root.getVector(field.getName())).setSafe(i % nTicksPerBatch, ((String) value).getBytes());
+
+          } else {
+            throw new WarpScriptException("Unsupported field vector type. Support BOOLEAN, LONG, DOUBLE, STRING or BYTES.");
+          }
+        }
+
+        if (i % nTicksPerBatch == nTicksPerBatch - 1) {
+          writer.writeBatch();
+        }
+      }
+
+      if ((count - 1) % nTicksPerBatch != nTicksPerBatch - 1 ) {
+        root.setRowCount((count - 1) % nTicksPerBatch);
+        writer.writeBatch();
+      }
+
+      writer.end();
+    } catch (IOException e) {
+      throw new WarpScriptException(e);
+    } finally {
+      root.close();
+    }
+  }
+
   //
   // Readers
   //
@@ -709,7 +804,7 @@ public class ArrowVectorHelper {
         timestampVector.getReader().setPosition(i);
 
         if (null == timestampVector.getReader().readLong()) {
-          System.out.println("Failed index: " + i);
+          throw new WarpScriptException("Failed index: " + i);
         }
 
 

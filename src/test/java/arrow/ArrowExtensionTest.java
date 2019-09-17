@@ -28,6 +28,9 @@ import org.junit.Test;
 
 import java.io.StringReader;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -146,6 +149,48 @@ public class ArrowExtensionTest {
       Assert.isTrue(doubleEquality(latlon[1], latlon_res[1]));
       Assert.equals(GTSHelper.elevationAtIndex(gts, i), GTSHelper.elevationAtIndex(gts_res, i));
       Assert.equals(GTSHelper.valueAtIndex(gts, i), GTSHelper.valueAtIndex(gts_res, i));
+    }
+  }
+
+  @Test
+  public void roundTripDoubleDefaultOutputToDefaultOutput() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+    Random rand = new Random();
+
+    int size = 3;
+    int nCols = 2;
+
+    Map<String, List<Double>> cols = new LinkedHashMap<String, List<Double>>(nCols);
+    for (int i = 0; i < nCols; i++) {
+
+      List<Double> col =  new ArrayList<Double>(size);
+      for (int j = 0; j < size; j++) {
+
+        col.add(rand.nextDouble());
+      }
+
+      cols.put(String.valueOf(i), col);
+    }
+
+    List<Map> pair = new ArrayList<>(2);
+    pair.add(new LinkedHashMap<>());
+    pair.add(cols);
+    stack.push(pair);
+    stack.exec(ArrowExtension.TOARROW);
+    stack.exec(ArrowExtension.ARROWTO);
+
+    List out = (List) stack.pop();
+    Map<String, List<Double>> res = (Map) out.get(1);
+    stack.push(out.get(0));
+    stack.exec("DUP TYPEOF 'MAP' == ASSERT SIZE 3 == ASSERT");
+
+    for (int i = 0; i < nCols; i++) {
+      for (int j = 0; j < size; j++) {
+
+        Assert.isTrue(doubleEquality(cols.get(String.valueOf(i)).get(j), res.get(String.valueOf(i)).get(j)));
+      }
     }
   }
 
