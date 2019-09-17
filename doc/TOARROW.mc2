@@ -3,7 +3,7 @@
 'since' '2.1' 
 'deprecated' '' 
 'deleted' '' 
-'version' 'all' 
+'version' '2.2' 
 'tags' [ 'arrow' ] 
 'desc' 'Encode an object into a byte array in Arrow streaming format.' 
 'sig' [ [ [ 'in:OBJECT' ] [ 'result:OBJECT' ] ] [ [ {

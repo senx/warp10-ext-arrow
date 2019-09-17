@@ -44,6 +44,8 @@ public class GenerateDocumentation extends RunAndGenerateDocumentationWithUnitTe
     return true;
   }
 
+  protected String VERSION() {return "2.2";}
+
   protected List<String> TAGS() {
     List<String> tags = new ArrayList<>();
     tags.add("arrow");

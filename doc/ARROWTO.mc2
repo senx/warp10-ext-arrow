@@ -3,7 +3,7 @@
 'since' '2.1' 
 'deprecated' '' 
 'deleted' '' 
-'version' 'all' 
+'version' '2.2' 
 'tags' [ 'arrow' ] 
 'desc' 'Decode an Arrow stream. If its schema metadata has the field WarpScriptType, then this function pushes onto the stack an object of that type (GTS or GTSENCODER). Otherwise, it pushes a list of two items: the custom metadata (a MAP), and the field vectors (a MAP of LIST).' 
 'sig' [ [ [ 'bytes:BYTES' ] [ 'result:OBJECT' ] ] [ [ {
