@@ -52,11 +52,11 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
-      .addOptionalArgument(Boolean.class, DEFAULT, "Always output metadata and vector fields (ignore WarpScriptType). Default to false.", false)
+      .addOptionalArgument(Boolean.class, DEFAULT, "Force output type to be a pair LIST of metadata and vector fields (ignore WarpScriptType). Default to false.", false)
       .build();
 
     output = new ArgumentsBuilder()
-      .addArgument(Object.class, RESULT, "The decoded object. GTS, GTSENCODER or metadata (a LIST) and vector fields (a MAP of LIST).")
+      .addArgument(Object.class, RESULT, "The decoded object. GTS, GTSENCODER or pair LIST of metadata (a LIST) and vector fields (a MAP of LIST).")
       .build();
 
   }

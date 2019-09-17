@@ -51,7 +51,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
     getDocstring().append("Encode an object into a byte array in Arrow streaming format.");
 
     args =  new ArgumentsBuilder()
-      .addArgument(Object.class, IN, "The object to be converted: GTS, GtsEncoder, String or Byte array.")
+      .addArgument(Object.class, IN, "The object to be converted: GTS, GTSENCODER, or a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).")
       .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
 
@@ -66,13 +66,6 @@ public class TOARROW extends FormattedWarpScriptFunction {
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
     Object in = params.get(IN);
     int nTicksPerBatch = ((Long) params.get(BATCH_SIZE)).intValue();
-
-    if (in instanceof String || in instanceof byte[]) {
-
-      stack.push(in);
-      UNWRAPENCODER.apply(stack);
-      in = stack.pop();
-    }
 
     if (in instanceof GeoTimeSerie) {
 
@@ -98,13 +91,27 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
     } else if (in instanceof List) {
 
-      // table extends ArrayList<GeoTimeSeries> ?
-      throw new WarpScriptException(getName() + ": unsupported input type"); // TODO ?
+      List pair = (List) in;
+      if (2 != pair.size() || !(pair.get(0) instanceof Map) || !(pair.get(1) instanceof Map)) {
+        throw new WarpScriptException("When " + getName() + "'s input is a LIST, it expects two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).");
+      }
 
-    } else if (in instanceof Map) {
+      Map<String, List> columns = (Map<String, List>) pair.get(1);
 
-      // Map<List<Object>> ... ?
-      throw new WarpScriptException(getName() + ": unsupported input type"); // TODO ?
+      Integer commonSize = null;
+      for (String key: columns.keySet()) {
+        if (null == commonSize) {
+          commonSize = columns.get(key).size();
+        } else {
+          if (commonSize != columns.get(key).size()) {
+            throw new WarpScriptException(getName() + ": incoherent field vector size. They must be equal.");
+          }
+        }
+      }
+
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ArrowVectorHelper.mapListToArrowStream(pair, nTicksPerBatch, out);
+      stack.push(out.toByteArray());
 
     } else {
 

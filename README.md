@@ -3,8 +3,8 @@
 WarpScript functions for conversions from and to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).
 
 <pre>
-->ARROW    // Encode a GTS, a GTSENCODER, a STRING, or BYTES into Arrow streaming format (BYTES).
-ARROW->    // Decode an Arrow stream (BYTES). Depending on its input, this function pushes a GTS, a GTSENCODER, or a list of two items: custom metadata (a MAP), and field vectors (a MAP of LIST).
+->ARROW    // Encode input into Arrow streaming format (BYTES). Input can be a GTS, a GTSENCODER, or a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).
+ARROW->    // Decode an Arrow stream (BYTES) into one of the three input types of ->ARROW.
 </pre>
 
 #### Build notes
