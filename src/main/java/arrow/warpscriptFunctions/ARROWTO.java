@@ -21,7 +21,6 @@ import io.warp10.script.formatted.FormattedWarpScriptFunction;
 
 import java.io.ByteArrayInputStream;
 import java.nio.channels.Channels;
-import java.util.List;
 import java.util.Map;
 
 import arrow.ArrowVectorHelper;
@@ -49,7 +48,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
     super(name);
 
     getDocstring().append("Decode an Arrow stream. If its schema metadata has the field WarpScriptType, then this function pushes onto the stack an object of that type (GTS or GTSENCODER)." +
-      " Otherwise, it pushes the metadata (a MAP), then the field vectors (a MAP of LIST).");
+      " Otherwise, it pushes a list of two items: the custom metadata (a MAP), and the field vectors (a MAP of LIST).");
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
@@ -66,15 +65,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
     byte[] in = (byte[]) params.get(BYTES);
     boolean mapList = Boolean.TRUE.equals(params.get(DEFAULT));
-    Object res = ArrowVectorHelper.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList);
-
-    if (res instanceof List) {
-      for (Object item: (List) res) {
-        stack.push(item);
-      }
-    } else {
-      stack.push(res);
-    }
+    stack.push(ArrowVectorHelper.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList));
 
     return stack;
   }

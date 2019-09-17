@@ -18,7 +18,6 @@ package arrow;
 import com.geoxp.GeoXPLib;
 import com.vividsolutions.jts.util.Assert;
 import io.warp10.WarpConfig;
-import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
@@ -182,9 +181,9 @@ public class ArrowExtensionTest {
     stack.exec("'in' STORE { 'bytes' $in 'default' true }");
     stack.exec(ArrowExtension.ARROWTO);
 
-    stack.dump(stack.depth());
-
-    Map<String, List> res = (Map) stack.pop();
+    List out = (List) stack.pop();
+    Map<String, List> res = (Map) out.get(1);
+    stack.push(out.get(0));
     stack.exec("TYPEOF 'MAP' == ASSERT");
 
     stack.push(res.get(ArrowVectorHelper.TIMESTAMPS_KEY));
