@@ -14,10 +14,10 @@
 //   limitations under the License.
 //
 
-package arrow;
+package io.warp10.arrow;
 
-import arrow.warpscriptFunctions.ARROWTO;
-import arrow.warpscriptFunctions.TOARROW;
+import io.warp10.arrow.warpscriptFunctions.ARROWTO;
+import io.warp10.arrow.warpscriptFunctions.TOARROW;
 import io.warp10.script.NamedWarpScriptFunction;
 import io.warp10.warp.sdk.WarpScriptExtension;
 

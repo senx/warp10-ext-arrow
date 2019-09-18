@@ -13,8 +13,9 @@
 // limitations under the License.
 //
 
-package arrow.warpscriptFunctions;
+package io.warp10.arrow.warpscriptFunctions;
 
+import io.warp10.arrow.ArrowVectorHelper;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
@@ -22,8 +23,6 @@ import io.warp10.script.formatted.FormattedWarpScriptFunction;
 import java.io.ByteArrayInputStream;
 import java.nio.channels.Channels;
 import java.util.Map;
-
-import arrow.ArrowVectorHelper;
 
 /**
  * Decode an Arrow stream

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package arrow;
+package io.warp10.arrow;
 
 import com.geoxp.GeoXPLib;
 import io.warp10.Revision;

@@ -217,7 +217,7 @@ publishing {
       // We publish the result of the 'jar' task and the sources jar
       from components.java 
       artifact sourcesJar
-      artifact javadocJar
+      //artifact javadocJar
     }
 
     //

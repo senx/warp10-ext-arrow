@@ -14,9 +14,9 @@
 //   limitations under the License.
 //
 
-package arrow.warpscriptFunctions;
+package io.warp10.arrow.warpscriptFunctions;
 
-import arrow.ArrowVectorHelper;
+import io.warp10.arrow.ArrowVectorHelper;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;

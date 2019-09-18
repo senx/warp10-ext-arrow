@@ -14,7 +14,7 @@
 //   limitations under the License.
 //
 
-package arrow;
+package io.warp10.arrow;
 
 import io.warp10.script.WarpScriptLib;
 import io.warp10.script.formatted.RunAndGenerateDocumentationWithUnitTests;
