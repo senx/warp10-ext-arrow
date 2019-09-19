@@ -1,9 +1,9 @@
 {
 'name' '->ARROW' 
-'since' '2.1' 
+'since' '2.2' 
 'deprecated' '' 
 'deleted' '' 
-'version' '2.2' 
+'version' 'all' 
 'tags' [ 'arrow' ] 
 'desc' 'Encode an object into a byte array in Arrow streaming format.' 
 'sig' [ [ [ 'in:OBJECT' ] [ 'out:BYTES' ] ] [ [ {
