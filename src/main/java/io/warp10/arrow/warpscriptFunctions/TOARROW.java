@@ -42,6 +42,9 @@ public class TOARROW extends FormattedWarpScriptFunction {
   public Arguments getArguments() {
     return args;
   }
+  public Arguments getOutput() {
+    return output;
+  }
 
   public TOARROW(String name) {
     super(name);
