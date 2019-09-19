@@ -105,9 +105,9 @@ configurations {
 //
 
 dependencies {
-  provided 'io.warp10:warpscript:2.1.0-191-g62e3eb62'
+  provided 'io.warp10:warpscript:2.2.0'
 
-  testCompile'io.warp10:warpscript:2.1.0-191-g62e3eb62'
+  testCompile'io.warp10:warpscript:2.2.0'
   
   testImplementation 'junit:junit:4.12'
 
