@@ -82,7 +82,7 @@ public class ArrowVectorHelper {
 
   public final static String TYPE = "WarpScriptType";
   public final static String REV = "WarpScriptVersion";
-  public final static String STU = "WarpScriptSecondsPerTimeUnit";
+  public final static String STU = "WarpScriptTimeUnitsPerSecond";
 
   //
   // Fields of arrow schemas
