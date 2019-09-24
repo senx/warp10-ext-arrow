@@ -98,16 +98,13 @@ public class ArrowVectorHelper {
   final static Field LONG_VALUES_FIELD = Field.nullable(LONG_VALUES_KEY,new ArrowType.Int(64, true));
   final static Field DOUBLE_VALUES_FIELD = Field.nullable(DOUBLE_VALUES_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE));
   final static Field BOOLEAN_VALUES_FIELD = Field.nullable(BOOLEAN_VALUES_KEY, new ArrowType.Bool());
-  final static Field STRING_VALUES_FIELD = Field.nullable(STRING_VALUES_KEY, new ArrowType.Binary());
+  final static Field STRING_VALUES_FIELD = Field.nullable(STRING_VALUES_KEY, new ArrowType.Utf8());
   final static Field LATITUDE_FIELD = Field.nullable(LATITUDE_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE));
   final static Field LONGITUDE_FIELD = Field.nullable(LONGITUDE_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE));
   final static Field ELEVATION_FIELD = Field.nullable(ELEVATION_KEY, new ArrowType.Int(64, true));
 
   // additional fields for GTSEncoders
-  final static Field UTF8_VALUES_FIELD = Field.nullable(STRING_VALUES_KEY, new ArrowType.Utf8()); // replaces STRING_VALUES_FIELD
   final static Field BYTES_VALUES_FIELD = Field.nullable(BYTES_VALUES_KEY, new ArrowType.Binary());
-  //final static Field BIGDECIMAL_VALUES_FIELD = Field.nullable(BIGDECIMAL_VALUES_KEY, new ArrowType.Int(64, true));
-  //final static Field BIGDECIMAL_SCALES_FIELD = Field.nullable(BIGDECIMAL_SCALES_KEY, new ArrowType.Int(32, true));
 
   //
   // Json converters for labels and attributes
@@ -396,7 +393,7 @@ public class ArrowVectorHelper {
     //fields.add(BIGDECIMAL_VALUES_FIELD);
     //fields.add(BIGDECIMAL_SCALES_FIELD);
     fields.add(BOOLEAN_VALUES_FIELD);
-    fields.add(UTF8_VALUES_FIELD);
+    fields.add(STRING_VALUES_FIELD);
     fields.add(BYTES_VALUES_FIELD);
 
     return new Schema(fields, metadata);
