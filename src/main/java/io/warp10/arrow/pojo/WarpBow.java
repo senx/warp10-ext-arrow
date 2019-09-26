@@ -36,7 +36,6 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -519,7 +518,6 @@ public class WarpBow {
   }
 
   public void writeGTS(ArrowStreamWriter writer, GeoTimeSerie gts) throws IOException, WarpScriptException {
-
     for (int i = 0; i < gts.size(); i++) {
       prepareGtsDataPoint(i, gts);
 
@@ -565,9 +563,5 @@ public class WarpBow {
     } finally {
       root.close();
     }
-  }
-
-  public void readListFromStream(ArrowStreamReader reader) {
-
   }
 }

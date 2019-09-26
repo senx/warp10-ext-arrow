@@ -15,7 +15,7 @@
 
 package io.warp10.arrow.warpscriptFunctions;
 
-import io.warp10.arrow.deprecated.ArrowVectorHelper;
+import io.warp10.arrow.direct.ArrowVectorHelper;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;

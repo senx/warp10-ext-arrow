@@ -18,7 +18,7 @@ package io.warp10.arrow;
 import com.geoxp.GeoXPLib;
 import com.vividsolutions.jts.util.Assert;
 import io.warp10.WarpConfig;
-import io.warp10.arrow.deprecated.ArrowVectorHelper;
+import io.warp10.arrow.direct.ArrowVectorHelper;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;

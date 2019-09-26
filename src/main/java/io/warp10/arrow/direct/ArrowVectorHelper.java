@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package io.warp10.arrow.deprecated;
+package io.warp10.arrow.direct;
 
 import com.geoxp.GeoXPLib;
 import io.warp10.Revision;
