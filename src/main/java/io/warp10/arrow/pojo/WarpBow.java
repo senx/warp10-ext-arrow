@@ -16,8 +16,11 @@
 
 package io.warp10.arrow.pojo;
 
+import com.geoxp.GeoXPLib;
 import io.warp10.Revision;
+import io.warp10.continuum.gts.GTSDecoder;
 import io.warp10.continuum.gts.GTSEncoder;
+import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
 import io.warp10.script.WarpScriptException;
@@ -26,21 +29,25 @@ import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.dictionary.DictionaryProvider;
+import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * A WarpSchema wraps WarpFields into an Arrow's schema.
- * It has writer and reader methods.
+ * A WarpBow build the Arrow schema corresponding to WarpScript logics,
+ * also handle stream writers and readers.
  */
-public class WarpSchema {
+public class WarpBow {
 
   public final static String TYPE = "WarpScriptType";
   public final static String REV = "WarpScriptVersion";
@@ -51,6 +58,8 @@ public class WarpSchema {
   final private BufferAllocator allocator;
   final private Map<String, String> metadata;
   final private List<WarpField> warpFields;
+  final private DictionaryProvider.MapDictionaryProvider dictionaryProvider;
+  final private Object[] dataPointHolder;
 
   public Schema getSchema() {
     return schema;
@@ -68,11 +77,16 @@ public class WarpSchema {
     return warpFields;
   }
 
-  public WarpSchema(Map<String, String> metadata, List<WarpField> warpFields) {
+  public DictionaryProvider getDictionaryProvider() {
+    return dictionaryProvider;
+  }
+
+  public WarpBow(Map<String, String> metadata, List<WarpField> warpFields) {
 
     this.metadata = metadata;
     this.warpFields = warpFields;
     allocator = new RootAllocator();
+    dictionaryProvider = new DictionaryProvider.MapDictionaryProvider();
 
     List<Field> fields = new ArrayList<Field>(warpFields.size());
     List<FieldVector> vectors = new ArrayList<FieldVector>(warpFields.size());
@@ -81,14 +95,21 @@ public class WarpSchema {
       fields.add(warpField.getField());
       warpField.initialize(allocator);
       vectors.add(warpField.getVector());
+
+      if (warpField instanceof DictionaryEncodedWarpField) {
+        dictionaryProvider.put(((DictionaryEncodedWarpField) warpField).getDictionary());
+      }
     }
 
     schema = new Schema(fields, metadata);
-
     root = new VectorSchemaRoot(schema, vectors, 0);
+    dataPointHolder = new Object[warpFields.size()];
+    for (int i = 0; i < dataPointHolder.length; i++) {
+      dataPointHolder[i] = null;
+    }
   }
 
-  public WarpSchema(List<WarpField> warpFields) {
+  public WarpBow(List<WarpField> warpFields) {
     this(null, warpFields);
   }
 
@@ -113,11 +134,11 @@ public class WarpSchema {
     }
   }
 
-  public WarpSchema singleGtsSchema(GeoTimeSerie gts) throws WarpScriptException {
+  public static WarpBow singleGtsSchema(GeoTimeSerie gts) throws WarpScriptException {
     throw new WarpScriptException("Not yet implemented. Please use ArrowVectorHelper's equivalent method for now.");
   }
 
-  public WarpSchema singleGtsEncoderSchema(GTSEncoder encoder) throws WarpScriptException {
+  public static WarpBow singleGtsEncoderSchema(GTSEncoder encoder) throws WarpScriptException {
     throw new WarpScriptException("Not yet implemented. Please use ArrowVectorHelper's equivalent method for now.");
   }
 
@@ -129,7 +150,7 @@ public class WarpSchema {
    * @return
    * @throws WarpScriptException
    */
-  public WarpSchema GtsOrEncoderListSchema(List<Object> list) throws WarpScriptException {
+  public static WarpBow GtsOrEncoderListSchema(List<Object> list) throws WarpScriptException {
     for (Object o: list) {
       if (!(o instanceof GeoTimeSerie) || !(o instanceof GTSEncoder)) {
         throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
@@ -162,7 +183,7 @@ public class WarpSchema {
         for (String key: labels.keySet()) {
 
           if(!namePool.contains(key)) {
-            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes)); // id 0 is reserved for classname if field is used
+            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.LABEL)); // id 0 is reserved for classname if field is used
             namePool.add(key);
           }
         }
@@ -171,7 +192,7 @@ public class WarpSchema {
         for (String key: attributes.keySet()) {
 
           if(!namePool.contains(key)) {
-            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes));
+            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.ATTRIBUTE));
             namePool.add(key);
           }
         }
@@ -192,7 +213,7 @@ public class WarpSchema {
           for (String key: labels.keySet()) {
 
             if(!namePool.contains(key)) {
-              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes)); // id 0 is reserved for classname if field is used
+              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.LABEL)); // id 0 is reserved for classname if field is used
               namePool.add(key);
             }
           }
@@ -201,7 +222,7 @@ public class WarpSchema {
           for (String key: attributes.keySet()) {
 
             if(!namePool.contains(key)) {
-              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes));
+              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.ATTRIBUTE));
               namePool.add(key);
             }
           }
@@ -344,17 +365,202 @@ public class WarpSchema {
     metadata.put(REV, Revision.REVISION);
     metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 
-    return new WarpSchema(metadata, fields);
+    return new WarpBow(metadata, fields);
   }
 
-  public void writeToStream(OutputStream out) {
+  /**
+   * Populate dataPointHolder with data from input GTS at given index in order given by the schema.
+   *
+   * @param index
+   * @param gts
+   */
+  public void prepareGtsDataPoint(int index, GeoTimeSerie gts) throws WarpScriptException {
 
+    double[] geoPointHolder = null;
+    if (gts.hasElevations()) {
+      long location = GTSHelper.locationAtIndex(gts, index);
+      if (GeoTimeSerie.NO_LOCATION != location) {
+        geoPointHolder = GeoXPLib.fromGeoXPPoint(location);
+      }
+    }
+
+    for (int i = 0; i < warpFields.size(); i++) {
+      WarpField warpField = warpFields.get(i);
+
+      if (warpField instanceof ClassnameWarpField) {
+        dataPointHolder[i] = gts.getName();
+
+      } else if (warpField instanceof LabelWarpField) {
+
+        switch (((LabelWarpField) warpField).getType()) {
+
+          case LABEL:
+            dataPointHolder[i] = gts.getLabels().get(warpField.getKey());
+            break;
+
+          case ATTRIBUTE:
+            dataPointHolder[i] = gts.getMetadata().getAttributes().get(warpField.getKey());
+            break;
+        }
+
+      } else if (warpField instanceof TimestampWarpField) {
+        dataPointHolder[i] = GTSHelper.tickAtIndex(gts, index);
+
+      } else if (warpField instanceof LatitudeWarpField) {
+        if (null == geoPointHolder) {
+          dataPointHolder[i] = null;
+        } else {
+          dataPointHolder[i] = geoPointHolder[0];
+        }
+
+      } else if (warpField instanceof LongitudeWarpField) {
+        if (null == geoPointHolder) {
+          dataPointHolder[i] = null;
+        } else {
+          dataPointHolder[i] = geoPointHolder[1];
+        }
+
+      } else if (warpField instanceof ElevationWarpField) {
+        long elevation = GTSHelper.elevationAtIndex(gts, index);
+
+        if (GeoTimeSerie.NO_ELEVATION == elevation) {
+          dataPointHolder[i] = null;
+        } else {
+          dataPointHolder[i] = elevation;
+        }
+
+      } else if (warpField instanceof ValueWarpField) {
+        Object value = GTSHelper.valueAtIndex(gts, index);
+
+        if (((ValueWarpField) warpField).getType().getCorrespondingClass() == value.getClass()) {
+          dataPointHolder[i] = value;
+        } else {
+          dataPointHolder[i] = null;
+        }
+      } else {
+        throw new WarpScriptException("Unrecognized field.");
+      }
+    }
+  }
+
+  /**
+   * Populate dataPointHolder with data from input GtsDecoder in order given by the schema.
+   *
+   * @param index
+   * @param gts
+   */
+  public void prepareGtsEncoderDataPoint(GTSDecoder decoder) throws WarpScriptException {
+
+    double[] geoPointHolder = null;
+    long location = decoder.getLocation();
+    if (GeoTimeSerie.NO_LOCATION != location) {
+      geoPointHolder = GeoXPLib.fromGeoXPPoint(location);
+    }
+
+    for (int i = 0; i < warpFields.size(); i++) {
+      WarpField warpField = warpFields.get(i);
+
+      if (warpField instanceof ClassnameWarpField) {
+        dataPointHolder[i] = decoder.getName();
+
+      } else if (warpField instanceof LabelWarpField) {
+
+        switch (((LabelWarpField) warpField).getType()) {
+
+          case LABEL:
+            dataPointHolder[i] = decoder.getLabels().get(warpField.getKey());
+            break;
+
+          case ATTRIBUTE:
+            dataPointHolder[i] = decoder.getMetadata().getAttributes().get(warpField.getKey());
+            break;
+        }
+
+      } else if (warpField instanceof TimestampWarpField) {
+        dataPointHolder[i] = decoder.getTimestamp();
+
+      } else if (warpField instanceof LatitudeWarpField) {
+        if (null == geoPointHolder) {
+          dataPointHolder[i] = null;
+        } else {
+          dataPointHolder[i] = geoPointHolder[0];
+        }
+
+      } else if (warpField instanceof LongitudeWarpField) {
+        if (null == geoPointHolder) {
+          dataPointHolder[i] = null;
+        } else {
+          dataPointHolder[i] = geoPointHolder[1];
+        }
+
+      } else if (warpField instanceof ElevationWarpField) {
+        long elevation = decoder.getElevation();
+
+        if (GeoTimeSerie.NO_ELEVATION == elevation) {
+          dataPointHolder[i] = null;
+        } else {
+          dataPointHolder[i] = elevation;
+        }
+
+      } else if (warpField instanceof ValueWarpField) {
+        Object value = decoder.getValue();
+
+        if (((ValueWarpField) warpField).getType().getCorrespondingClass() == value.getClass()) {
+          dataPointHolder[i] = value;
+        } else {
+          dataPointHolder[i] = null;
+        }
+
+      } else {
+        throw new WarpScriptException("Unrecognized field.");
+      }
+    }
+  }
+
+  public void writeListToStream(OutputStream out, List<Objects> list) throws WarpScriptException {
+
+    try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, dictionaryProvider, out)) {
+
+      writer.start();
+      for (Object o : list) {
+
+        if (o instanceof GeoTimeSerie) {
+          GeoTimeSerie gts = (GeoTimeSerie) o;
+
+          for (int i = 0; i < gts.size(); i++) {
+            prepareGtsDataPoint(i, gts);
+
+            set(i, dataPointHolder);
+          }
+
+          root.setRowCount(gts.size());
+          writer.writeBatch();
+
+        } else if (o instanceof GTSEncoder) {
+          GTSDecoder decoder = ((GTSEncoder) o).getDecoder(true);
+
+          int i = 0;
+          while (decoder.next()) {
+            prepareGtsEncoderDataPoint(decoder);
+
+            set(i++, dataPointHolder);
+          }
+
+          root.setRowCount(i);
+          writer.writeBatch();
+
+        } else {
+          throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
+        }
+      }
+    } catch (IOException e) {
+      throw new WarpScriptException(e);
+    } finally {
+      root.close();
+    }
   }
 
   public void readStream(InputStream in) {
 
   }
-
-
-
 }

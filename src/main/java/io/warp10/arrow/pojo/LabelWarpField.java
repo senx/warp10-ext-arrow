@@ -34,6 +34,12 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
   private final Field indexField;
   private final Field dictionaryField;
 
+  public enum Type {
+    LABEL,
+    ATTRIBUTE;
+  }
+  private final Type type;
+
   private final static List<String> reservedFieldNames = new ArrayList<>(); // names that can't be used as key of label or attributes
   static {
     reservedFieldNames.add(TimestampWarpField.TIMESTAMPS_KEY);
@@ -48,7 +54,7 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
     reservedFieldNames.add(ClassnameWarpField.CLASSNAME_KEY);
   }
 
-  public LabelWarpField(String labelKey, int dictionaryId){
+  public LabelWarpField(String labelKey, int dictionaryId, Type type){
     if (reservedFieldNames.contains(labelKey)) {
       throw new RuntimeException("Label key '" + labelKey + "' is reserved by serialization process. Please rename it.");
     }
@@ -57,9 +63,10 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
     encoding = new DictionaryEncoding(dictionaryId, false, INDEX_TYPE);
     indexField = new Field(labelKey, new FieldType(true, INDEX_TYPE, encoding), null);
     dictionaryField = Field.nullable(labelKey + "::dictionary", new ArrowType.Utf8());
+    this.type = type;
   }
 
-  public LabelWarpField(BufferAllocator allocator, String labelKey, int dictionaryId) {
+  public LabelWarpField(BufferAllocator allocator, String labelKey, int dictionaryId, Type type) {
     super(allocator);
 
     if (reservedFieldNames.contains(labelKey)) {
@@ -70,6 +77,7 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
     encoding = new DictionaryEncoding(dictionaryId, false, INDEX_TYPE);
     indexField = new Field(labelKey, new FieldType(true, INDEX_TYPE, encoding), null);
     dictionaryField = Field.nullable(labelKey + "::dictionary", new ArrowType.Utf8());
+    this.type = type;
   }
 
   public String getKey() {
@@ -91,6 +99,8 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
   public DictionaryEncoding getDictionaryEncoding() {
     return encoding;
   }
+
+  public Type getType() { return type; }
 
   @Override
   public void setSafe(int index, Object o) {

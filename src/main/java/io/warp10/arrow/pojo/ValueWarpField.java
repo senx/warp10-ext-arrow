@@ -43,11 +43,19 @@ public class ValueWarpField extends WarpField {
   private final static Field BYTES_VALUES_FIELD = Field.nullable(BYTES_VALUES_KEY, new ArrowType.Binary());
 
   public enum Type {
-    LONG,
-    DOUBLE,
-    BOOLEAN,
-    STRING,
-    BYTES
+    LONG(Long.class),
+    DOUBLE(Double.class),
+    BOOLEAN(Boolean.class),
+    STRING(String.class),
+    BYTES(byte[].class);
+
+    private final Class<?> clazz;
+    public Class<?> getCorrespondingClass() {
+      return clazz;
+    }
+    Type(Class<?> clazz){
+      this.clazz = clazz;
+    }
   }
 
   public final Type type;
@@ -108,26 +116,11 @@ public class ValueWarpField extends WarpField {
   }
 
   public String getWarpScriptType() {
+    return TYPEOF.typeof(type.getCorrespondingClass());
+  }
 
-    switch (type) {
-      case LONG:
-        return TYPEOF.typeof(Long.class);
-
-      case DOUBLE:
-        return TYPEOF.typeof(Double.class);
-
-      case BOOLEAN:
-        return TYPEOF.typeof(Boolean.class);
-
-      case STRING:
-        return TYPEOF.typeof(String.class);
-
-      case BYTES:
-        return TYPEOF.typeof(byte[].class);
-
-      default:
-        throw new RuntimeException("Unrecognized type.");
-    }
+  public Type getType() {
+    return type;
   }
 
   private void setSafeLong(int index, Object o) {
