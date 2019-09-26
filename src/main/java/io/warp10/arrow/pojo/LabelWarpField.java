@@ -29,7 +29,7 @@ import java.util.List;
 public class LabelWarpField extends DictionaryEncodedWarpField {
 
   private final String labelKey;
-  private static final ArrowType.Int INDEX_TYPE = new ArrowType.Int(16, false); // max 2¹⁶ label keys
+  private static final ArrowType.Int INDEX_TYPE = new ArrowType.Int(16, true); // max 2¹⁵ label keys
   private final DictionaryEncoding encoding;
   private final Field indexField;
   private final Field dictionaryField;

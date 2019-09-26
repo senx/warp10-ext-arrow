@@ -151,7 +151,7 @@ public class WarpBow {
    */
   public static WarpBow GtsOrEncoderListSchema(List<Object> list) throws WarpScriptException {
     for (Object o: list) {
-      if (!(o instanceof GeoTimeSerie) || !(o instanceof GTSEncoder)) {
+      if (!(o instanceof GeoTimeSerie) && !(o instanceof GTSEncoder)) {
         throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
       }
     }

@@ -30,6 +30,7 @@ import org.junit.Test;
 import java.io.StringReader;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class ArrowExtensionTest {
 
     gts.reset(ticks, location, elevation, longs, size);
 
-    gts.setName("doubleGTS");
+    gts.setName("longGTS");
     stack.push(gts);
     stack.exec("{ 'type' 'LONG' } RELABEL");
 
@@ -124,7 +125,7 @@ public class ArrowExtensionTest {
 
     gts.reset(ticks, location, elevation, longs, size);
 
-    gts.setName("doubleGTS");
+    gts.setName("longGTS");
     stack.push(gts);
     stack.exec("{ 'type' 'LONG' } RELABEL");
 
@@ -217,7 +218,7 @@ public class ArrowExtensionTest {
 
     gts.reset(ticks, location, elevation, longs, size);
 
-    gts.setName("doubleGTS");
+    gts.setName("longGTS");
     stack.push(gts);
     stack.exec("{ 'type' 'LONG' } RELABEL");
 
@@ -252,5 +253,58 @@ public class ArrowExtensionTest {
       Assert.equals(GTSHelper.elevationAtIndex(gts, i), GTSHelper.elevationAtIndex(gts_res, i));
       Assert.equals(GTSHelper.valueAtIndex(gts, i), GTSHelper.valueAtIndex(gts_res, i));
     }
+  }
+
+  @Test
+  public void GtsListToArrowToWarpScripMapOfLists() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+
+    int size = 10000;
+    int N = 10;
+    List<GeoTimeSerie> list = new ArrayList<>(N);
+
+    for (int j = 0; j < N; j++) {
+
+      GeoTimeSerie gts = new GeoTimeSerie(size);
+
+      long[] ticks = new long[size];
+      long[] location = new long[size];
+      long[] elevation = new long[size];
+      long[] longs = new long[size];
+
+      for (int i = 0; i < size; i++) {
+        ticks[i] = i * Constants.TIME_UNITS_PER_S;
+        location[i] = rng.nextLong();
+        elevation[i] = rng.nextLong();
+        longs[i] = rng.nextLong();
+      }
+
+      gts.reset(ticks, location, elevation, longs, size);
+
+      gts.setName("longGTS");
+
+      Map<String, String> labels = new HashMap<String, String>(2);
+      labels.put("type", "LONG");
+      labels.put("id", String.valueOf(j));
+      gts.setLabels(labels);
+
+      list.add(gts);
+    }
+
+    stack.push(list);
+    stack.exec(ArrowExtension.TOARROW);
+    stack.exec(ArrowExtension.ARROWTO);
+    List res = (List) stack.pop();
+    Map<String, String> metadata =  (Map<String, String>) res.get(0);
+
+    System.out.println(metadata);
+    System.out.println(res.get(1));
+
+    
+    //TODO
+
+
   }
 }

@@ -925,6 +925,11 @@ public class ArrowVectorHelper {
               if (null == res.get(name)) {
                 res.put(name, new ArrayList<Long>());
               }
+
+              if (!((ArrowType.Int) field.getFieldType().getType()).getIsSigned()) {
+                throw new RuntimeException("Unsigned int not supported.");
+              }
+
               int bitWidth = ((ArrowType.Int) field.getFieldType().getType()).getBitWidth();
               if (64 == bitWidth) {
                 res.get(name).add(root.getVector(name).getReader().readLong().longValue());

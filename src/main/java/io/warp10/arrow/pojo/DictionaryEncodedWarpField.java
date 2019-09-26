@@ -21,6 +21,9 @@ import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.IntVector;
 import org.apache.arrow.vector.SmallIntVector;
 import org.apache.arrow.vector.TinyIntVector;
+import org.apache.arrow.vector.UInt1Vector;
+import org.apache.arrow.vector.UInt2Vector;
+import org.apache.arrow.vector.UInt4Vector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.dictionary.Dictionary;
 import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
@@ -53,8 +56,11 @@ public abstract class DictionaryEncodedWarpField extends WarpField {
       throw new RuntimeException("Dictionary field has already been initialized.");
     }
 
-    dictionary = new Dictionary(getDictionaryField().createVector(allocator), getDictionaryEncoding());
+    if (!getDictionaryEncoding().getIndexType().getIsSigned()) {
+      throw new RuntimeException("Unsigned int not supported.");
+    }
 
+    dictionary = new Dictionary(getDictionaryField().createVector(allocator), getDictionaryEncoding());
     lookUps = new HashMap<Object, Integer>();
   }
 

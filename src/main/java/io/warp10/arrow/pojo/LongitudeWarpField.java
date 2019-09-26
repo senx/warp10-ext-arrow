@@ -54,6 +54,6 @@ public class LongitudeWarpField extends WarpField {
       throw new RuntimeException(getField() + " field expect to set input of type double.");
     }
 
-    ((Float4Vector)  getVector()).setSafe(index, (float) o); // actually cast it to single precision
+    ((Float4Vector)  getVector()).setSafe(index, ((Double) o).floatValue()); // actually cast it to single precision
   }
 }
