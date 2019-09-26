@@ -17,6 +17,7 @@
 package io.warp10.arrow.warpscriptFunctions;
 
 import io.warp10.arrow.direct.ArrowVectorHelper;
+import io.warp10.arrow.pojo.WarpBow;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
@@ -52,7 +53,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
     getDocstring().append("Encode an object into a byte array in Arrow streaming format.");
 
     args =  new ArgumentsBuilder()
-      .addArgument(Object.class, IN, "The object to be converted: GTS, GTSENCODER, or a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).")
+      .addArgument(Object.class, IN, "The object to be converted: GTS, GTSENCODER, a LIST containing GTS and/or GTSENCODER, or a pair LIST of MAP: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).")
       .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
 
@@ -90,35 +91,52 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
     } else if (in instanceof List) {
 
-      List pair = (List) in;
-      if (2 != pair.size() || !(pair.get(0) instanceof Map) || !(pair.get(1) instanceof Map)) {
-        throw new WarpScriptException("When " + getName() + "'s input is a LIST, it expects two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).");
+      List list = (List) in;
+      if (0 == list.size()) {
+        throw new WarpScriptException(getName() + " received an empty list.");
       }
 
-      Map<String, List> columns = (Map<String, List>) pair.get(1);
+      if (list.get(0) instanceof  Map) {
 
-      Integer commonSize = null;
-      for (String key: columns.keySet()) {
-        if (0 == columns.get(key).size()) {
-          continue;
+        if (2 != list.size() || !(list.get(0) instanceof Map) || !(list.get(1) instanceof Map)) {
+          throw new WarpScriptException("When " + getName() + "'s input is a pair LIST of Map, it expects two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).");
         }
 
-        if (null == commonSize) {
-          commonSize = columns.get(key).size();
-        } else {
-          if (commonSize != columns.get(key).size()) {
-            throw new WarpScriptException(getName() + ": incoherent field vector size. They must be equal.");
+        Map<String, List> columns = (Map<String, List>) list.get(1);
+
+        Integer commonSize = null;
+        for (String key : columns.keySet()) {
+          if (0 == columns.get(key).size()) {
+            continue;
+          }
+
+          if (null == commonSize) {
+            commonSize = columns.get(key).size();
+          } else {
+            if (commonSize != columns.get(key).size()) {
+              throw new WarpScriptException(getName() + ": incoherent field vector size. They must be equal.");
+            }
           }
         }
-      }
 
-      if (0 == nTicksPerBatch) {
-        nTicksPerBatch = commonSize;
-      }
+        if (0 == nTicksPerBatch) {
+          nTicksPerBatch = commonSize;
+        }
 
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ArrowVectorHelper.columnsToArrowStream(pair, nTicksPerBatch, out);
-      stack.push(out.toByteArray());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ArrowVectorHelper.columnsToArrowStream(list, nTicksPerBatch, out);
+        stack.push(out.toByteArray());
+
+      } else {
+
+        if (0 != nTicksPerBatch) {
+          throw new WarpScriptException(BATCH_SIZE + " argument is unused for input of this type. It should not be set.");
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        WarpBow.GtsOrEncoderListSchema(list).writeListToStream(out, list);
+        stack.push(out.toByteArray());
+      }
 
     } else {
 
