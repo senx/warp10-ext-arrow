@@ -30,6 +30,7 @@ import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
+import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -517,37 +518,43 @@ public class WarpBow {
     }
   }
 
-  public void writeListToStream(OutputStream out, List<Objects> list) throws WarpScriptException {
+  public void writeGTS(ArrowStreamWriter writer, GeoTimeSerie gts) throws IOException, WarpScriptException {
 
+    for (int i = 0; i < gts.size(); i++) {
+      prepareGtsDataPoint(i, gts);
+
+      set(i, dataPointHolder);
+    }
+
+    root.setRowCount(gts.size());
+    writer.writeBatch();
+  }
+
+  public void writeGtsEncoder(ArrowStreamWriter writer, GTSEncoder encoder) throws IOException, WarpScriptException {
+    GTSDecoder decoder = encoder.getDecoder(true);
+
+    int i = 0;
+    while (decoder.next()) {
+      prepareGtsEncoderDataPoint(decoder);
+
+      set(i++, dataPointHolder);
+    }
+
+    root.setRowCount(i);
+    writer.writeBatch();
+  }
+
+  public void writeListToStream(OutputStream out, List<Objects> list) throws WarpScriptException {
     try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, dictionaryProvider, out)) {
 
       writer.start();
       for (Object o : list) {
 
         if (o instanceof GeoTimeSerie) {
-          GeoTimeSerie gts = (GeoTimeSerie) o;
-
-          for (int i = 0; i < gts.size(); i++) {
-            prepareGtsDataPoint(i, gts);
-
-            set(i, dataPointHolder);
-          }
-
-          root.setRowCount(gts.size());
-          writer.writeBatch();
+          writeGTS(writer, (GeoTimeSerie) o);
 
         } else if (o instanceof GTSEncoder) {
-          GTSDecoder decoder = ((GTSEncoder) o).getDecoder(true);
-
-          int i = 0;
-          while (decoder.next()) {
-            prepareGtsEncoderDataPoint(decoder);
-
-            set(i++, dataPointHolder);
-          }
-
-          root.setRowCount(i);
-          writer.writeBatch();
+          writeGtsEncoder(writer, (GTSEncoder) o);
 
         } else {
           throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
@@ -560,7 +567,7 @@ public class WarpBow {
     }
   }
 
-  public void readStream(InputStream in) {
+  public void readListFromStream(ArrowStreamReader reader) {
 
   }
 }
