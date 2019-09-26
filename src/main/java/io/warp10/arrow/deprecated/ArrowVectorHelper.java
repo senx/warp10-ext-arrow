@@ -594,16 +594,16 @@ public class ArrowVectorHelper {
       VectorSchemaRoot root = reader.getVectorSchemaRoot();
 
       if (!mapListOutput && TYPEOF.typeof(GeoTimeSerie.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
-        res = arrowStreamToGTS(root, reader);
+        res = arrowStreamToGTS(reader);
 
       } else if (!mapListOutput && TYPEOF.typeof(GTSEncoder.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
-        res = arrowStreamToGtsEncoder(root, reader);
+        res = arrowStreamToGtsEncoder(reader);
 
       } else {
 
         res = new ArrayList<>();
         ((ArrayList) res).add(root.getSchema().getCustomMetadata());
-        ((ArrayList) res).add(arrowStreamToMapOfLists(root, reader));
+        ((ArrayList) res).add(arrowStreamToMapOfLists(reader));
       }
 
     } catch (IOException ioe) {
@@ -621,8 +621,9 @@ public class ArrowVectorHelper {
     }
   }
 
-  public static GeoTimeSerie arrowStreamToGTS(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static GeoTimeSerie arrowStreamToGTS(ArrowStreamReader reader) throws IOException, WarpScriptException {
 
+    VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Schema schema = root.getSchema();
     if (!TYPEOF.typeof(GeoTimeSerie.class).equals(schema.getCustomMetadata().get(TYPE))) {
       throw new WarpScriptException("Tried to convert a GTS but input is not a GTS.");
@@ -756,8 +757,9 @@ public class ArrowVectorHelper {
     BINARY
   }
 
-  public static GTSEncoder arrowStreamToGtsEncoder(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static GTSEncoder arrowStreamToGtsEncoder(ArrowStreamReader reader) throws IOException, WarpScriptException {
 
+    VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Schema schema = root.getSchema();
     if (!TYPEOF.typeof(GTSEncoder.class).equals(schema.getCustomMetadata().get(TYPE))) {
       throw new WarpScriptException("Tried to convert a GTSENCODER but input is not a GTSENCODER.");
@@ -903,7 +905,9 @@ public class ArrowVectorHelper {
     return encoder;
   }
 
-  public static Map<String, List> arrowStreamToMapOfLists(VectorSchemaRoot root, ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static Map<String, List> arrowStreamToMapOfLists(ArrowStreamReader reader) throws IOException, WarpScriptException {
+
+    VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Map<String, List> res = new HashMap<String, List>();
     Schema schema = root.getSchema();
 
