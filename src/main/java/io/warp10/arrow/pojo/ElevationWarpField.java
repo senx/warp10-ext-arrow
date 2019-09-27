@@ -24,7 +24,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 
 public class ElevationWarpField extends WarpField {
 
-  static final String ELEVATION_KEY = "elevation";
+  public static final String ELEVATION_KEY = "elevation";
   private static final Field ELEVATION_FIELD = Field.nullable(ELEVATION_KEY, new ArrowType.Int(64, true));
 
   public ElevationWarpField(){}

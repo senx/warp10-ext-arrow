@@ -25,7 +25,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 
 public class LongitudeWarpField extends WarpField {
 
-  static final String LONGITUDE_KEY = "longitude";
+  public static final String LONGITUDE_KEY = "longitude";
   private static final Field LONGITUDE_FIELD = Field.nullable(LONGITUDE_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE));
 
   public LongitudeWarpField(){}

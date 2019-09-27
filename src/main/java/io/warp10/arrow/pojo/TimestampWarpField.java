@@ -24,7 +24,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 
 public class TimestampWarpField extends WarpField {
 
-  static final String TIMESTAMPS_KEY = "timestamp";
+  public static final String TIMESTAMPS_KEY = "timestamp";
   private static final Field TIMESTAMP_FIELD = nonNullable(TIMESTAMPS_KEY, new ArrowType.Int(64, true));
 
   public TimestampWarpField(){}

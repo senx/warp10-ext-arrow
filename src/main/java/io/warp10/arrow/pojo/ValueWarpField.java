@@ -30,11 +30,11 @@ import org.apache.arrow.vector.util.Text;
 
 public class ValueWarpField extends WarpField {
 
-  final static String LONG_VALUES_KEY = TYPEOF.typeof(Long.class);
-  final static String DOUBLE_VALUES_KEY = TYPEOF.typeof(Double.class);
-  final static String BOOLEAN_VALUES_KEY = TYPEOF.typeof(Boolean.class);
-  final static String STRING_VALUES_KEY = TYPEOF.typeof(String.class);
-  final static String BYTES_VALUES_KEY = TYPEOF.typeof(byte[].class); // for GtsEncoder
+  public final static String LONG_VALUES_KEY = TYPEOF.typeof(Long.class);
+  public final static String DOUBLE_VALUES_KEY = TYPEOF.typeof(Double.class);
+  public final static String BOOLEAN_VALUES_KEY = TYPEOF.typeof(Boolean.class);
+  public final static String STRING_VALUES_KEY = TYPEOF.typeof(String.class);
+  public final static String BYTES_VALUES_KEY = TYPEOF.typeof(byte[].class); // for GtsEncoder
 
   private final static Field LONG_VALUES_FIELD = Field.nullable(LONG_VALUES_KEY,new ArrowType.Int(64, true));
   private final static Field DOUBLE_VALUES_FIELD = Field.nullable(DOUBLE_VALUES_KEY, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE));

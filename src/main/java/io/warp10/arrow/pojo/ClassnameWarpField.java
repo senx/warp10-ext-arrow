@@ -25,7 +25,7 @@ import org.apache.arrow.vector.types.pojo.FieldType;
 
 public class ClassnameWarpField extends DictionaryEncodedWarpField {
 
-  static final String CLASSNAME_KEY = "classname";
+  public static final String CLASSNAME_KEY = "classname";
   private static final ArrowType.Int INDEX_TYPE = new ArrowType.Int(16, true); // max 2¹⁵ classes
   private static final DictionaryEncoding DICTIONARY_ENCODING = new DictionaryEncoding(0, false, INDEX_TYPE);
   private static final Field INDEX_FIELD = new Field(CLASSNAME_KEY, new FieldType(true, INDEX_TYPE, DICTIONARY_ENCODING), null);

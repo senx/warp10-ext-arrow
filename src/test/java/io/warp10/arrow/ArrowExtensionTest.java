@@ -19,6 +19,12 @@ import com.geoxp.GeoXPLib;
 import com.vividsolutions.jts.util.Assert;
 import io.warp10.WarpConfig;
 import io.warp10.arrow.direct.ArrowVectorHelper;
+import io.warp10.arrow.pojo.ClassnameWarpField;
+import io.warp10.arrow.pojo.ElevationWarpField;
+import io.warp10.arrow.pojo.LatitudeWarpField;
+import io.warp10.arrow.pojo.LongitudeWarpField;
+import io.warp10.arrow.pojo.TimestampWarpField;
+import io.warp10.arrow.pojo.ValueWarpField;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
@@ -282,7 +288,6 @@ public class ArrowExtensionTest {
       }
 
       gts.reset(ticks, location, elevation, longs, size);
-
       gts.setName("longGTS");
 
       Map<String, String> labels = new HashMap<String, String>(2);
@@ -299,12 +304,39 @@ public class ArrowExtensionTest {
     List res = (List) stack.pop();
     Map<String, String> metadata =  (Map<String, String>) res.get(0);
 
-    System.out.println(metadata);
-    System.out.println(res.get(1));
+    stack.push(metadata);
+    stack.exec("SIZE 3 ==");
 
-    
-    //TODO
+    Map<String, Object> cols = (Map<String, Object>) res.get(1);
 
+    Assert.isTrue(cols.containsKey(ClassnameWarpField.CLASSNAME_KEY));
+    Assert.isTrue(cols.containsKey("type"));
+    Assert.isTrue(cols.containsKey("id"));
+    Assert.isTrue(cols.containsKey(LatitudeWarpField.LATITUDE_KEY));
+    Assert.isTrue(cols.containsKey(LongitudeWarpField.LONGITUDE_KEY));
+    Assert.isTrue(cols.containsKey(ElevationWarpField.ELEVATION_KEY));
+    Assert.isTrue(cols.containsKey(ValueWarpField.LONG_VALUES_KEY));
 
+    int count = 0;
+    for (int j = 0; j < N; j++) {
+      for (int i = 0; i < size; i++) {
+        long tick = GTSHelper.tickAtIndex(list.get(j), i);
+        double[] location = GeoXPLib.fromGeoXPPoint(GTSHelper.locationAtIndex(list.get(j), i));
+        long elevation = GTSHelper.elevationAtIndex(list.get(j), i);
+        long val = (Long) GTSHelper.valueAtIndex(list.get(j), i);
+
+        // Right now reading dictionary encoded col is not supported
+        //Assert.isTrue(((List) cols.get(ClassnameWarpField.CLASSNAME_KEY)).get(count).equals("longGTS"));
+        //Assert.isTrue(cols.get("type").equals("LONG"));
+        //Assert.isTrue(cols.get("id").equals(String.valueOf(j)));
+
+        Assert.isTrue(tick == (Long) ((List) cols.get(TimestampWarpField.TIMESTAMPS_KEY)).get(count));
+        Assert.isTrue(doubleEquality((Double) ((List) cols.get(LatitudeWarpField.LATITUDE_KEY)).get(count), location[0]));
+        Assert.isTrue(doubleEquality((Double) ((List) cols.get(LongitudeWarpField.LONGITUDE_KEY)).get(count), location[1]));
+        Assert.isTrue(elevation == (Long) ((List) cols.get(ElevationWarpField.ELEVATION_KEY)).get(count));
+        Assert.isTrue(val == (Long) ((List) cols.get(ValueWarpField.LONG_VALUES_KEY)).get(count));
+        count++;
+      }
+    }
   }
 }
