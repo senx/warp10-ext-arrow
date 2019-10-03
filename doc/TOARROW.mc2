@@ -12,7 +12,7 @@
 } ] [ 'out:BYTES' ] ] ] 
 'params' {
 'nTicksPerBatch' 'The number of data point per batch. Default to full size.' 
-'in' 'The object to be converted: GTS, GTSENCODER, or a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).' 
+'in' 'The object to be converted: GTS, GTSENCODER, a LIST containing GTS and/or GTSENCODER, or a pair LIST of MAP: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).' 
 'out' 'The resulting byte stream.' 
 } 
 'related' [ 'ARROWTO' 'TOARROW' ] 
