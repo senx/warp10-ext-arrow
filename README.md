@@ -12,7 +12,7 @@ Supported input:
  * a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size),
  * a LIST containing either GTS or GTSENCODER.
 
-In the last case, the arrow schema has an additional column for classnames, and one additional column per label key. In the other case, metadata are wrapped into a JSON string of the custom metadata.
+In the last case, the arrow schema has an additional column for classnames, and one additional column per label/attribute key. In the other cases, metadata are wrapped into a JSON string of the custom metadata.
 
 <pre>
 ARROW->    // Decode an Arrow stream (BYTES).
