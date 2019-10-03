@@ -17,7 +17,7 @@
 package io.warp10.arrow.warpscriptFunctions;
 
 import io.warp10.arrow.direct.ArrowVectorHelper;
-import io.warp10.arrow.pojo.WarpBow;
+import io.warp10.arrow.pojo.WarpSchema;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
@@ -134,7 +134,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        WarpBow.GtsOrEncoderListSchema(list).writeListToStream(out, list);
+        WarpSchema.GtsOrEncoderListSchema(list).writeListToStream(out, list);
         stack.push(out.toByteArray());
       }
 

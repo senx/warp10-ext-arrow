@@ -23,6 +23,8 @@ import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
 
+import java.util.List;
+
 public class ClassnameWarpField extends DictionaryEncodedWarpField {
 
   public static final String CLASSNAME_KEY = "classname";
@@ -32,8 +34,17 @@ public class ClassnameWarpField extends DictionaryEncodedWarpField {
   private static final Field DICTIONARY_FIELD = Field.nullable(CLASSNAME_KEY + "::dictionary", new ArrowType.Utf8());
 
   public ClassnameWarpField(){}
+
   public ClassnameWarpField(BufferAllocator allocator) {
     super(allocator);
+  }
+
+  public ClassnameWarpField(List<Object> initialDictionary){
+    super(initialDictionary);
+  }
+
+  public ClassnameWarpField(BufferAllocator allocator, List<Object> initialDictionary){
+    super(allocator, initialDictionary);
   }
 
   public String getKey() {

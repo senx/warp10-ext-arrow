@@ -34,10 +34,12 @@ import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.dictionary.Dictionary;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -910,6 +912,7 @@ public class ArrowVectorHelper {
     VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Map<String, List> res = new HashMap<String, List>();
     Schema schema = root.getSchema();
+    Map<Long, Dictionary> dictionaries = reader.getDictionaryVectors();
 
     while (reader.loadNextBatch()) {
 
@@ -930,16 +933,32 @@ public class ArrowVectorHelper {
                 throw new RuntimeException("Unsigned int not supported.");
               }
 
+              long val;
               int bitWidth = ((ArrowType.Int) field.getFieldType().getType()).getBitWidth();
               if (64 == bitWidth) {
-                res.get(name).add(root.getVector(name).getReader().readLong().longValue());
+                val = root.getVector(name).getReader().readLong().longValue();
               } else if (32 == bitWidth) {
-                res.get(name).add(root.getVector(name).getReader().readInteger().longValue());
+                val = root.getVector(name).getReader().readInteger().longValue();
               } else if (16 == bitWidth) {
-                res.get(name).add(root.getVector(name).getReader().readShort().longValue());
+                val = root.getVector(name).getReader().readShort().longValue();
               } else {
                 throw new WarpScriptException("Int bit width other than 16, 32 or 64 are not supported.");
               }
+
+              DictionaryEncoding encoding = field.getDictionary();
+              if (null == encoding) {
+                res.get(name).add(val);
+              } else {
+                if (!dictionaries.get(encoding.getId()).getVectorType().getTypeID().equals(ArrowType.Utf8.TYPE_TYPE)) {
+                  throw new WarpScriptException("Dictionary encoding only support String values.");
+                }
+
+                FieldVector vector = dictionaries.get(encoding.getId()).getVector();
+                vector.getReader().setPosition((int) val);
+                res.get(name).add(vector.getReader().readText().toString());
+
+              }
+
               break;
 
             case FloatingPoint:

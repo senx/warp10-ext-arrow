@@ -40,13 +40,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
- * A WarpBow build the Arrow schema corresponding to WarpScript logics,
+ * A WarpSchema build the Arrow schema corresponding to WarpScript logics,
  * also handle stream writers and readers.
  */
-public class WarpBow {
+public class WarpSchema {
 
   public final static String TYPE = "WarpScriptType";
   public final static String REV = "WarpScriptVersion";
@@ -80,7 +79,7 @@ public class WarpBow {
     return dictionaryProvider;
   }
 
-  public WarpBow(Map<String, String> metadata, List<WarpField> warpFields) {
+  public WarpSchema(Map<String, String> metadata, List<WarpField> warpFields) {
 
     this.metadata = metadata;
     this.warpFields = warpFields;
@@ -108,7 +107,7 @@ public class WarpBow {
     }
   }
 
-  public WarpBow(List<WarpField> warpFields) {
+  public WarpSchema(List<WarpField> warpFields) {
     this(null, warpFields);
   }
 
@@ -133,12 +132,84 @@ public class WarpBow {
     }
   }
 
-  public static WarpBow singleGtsSchema(GeoTimeSerie gts) throws WarpScriptException {
+  public static WarpSchema singleGtsSchema(GeoTimeSerie gts) throws WarpScriptException {
     throw new WarpScriptException("Not yet implemented. Please use ArrowVectorHelper's equivalent method for now.");
   }
 
-  public static WarpBow singleGtsEncoderSchema(GTSEncoder encoder) throws WarpScriptException {
+  public static WarpSchema singleGtsEncoderSchema(GTSEncoder encoder) throws WarpScriptException {
     throw new WarpScriptException("Not yet implemented. Please use ArrowVectorHelper's equivalent method for now.");
+  }
+
+  /**
+   * Create a list with all classnames found in list of GTS, GTSEncoders
+   * @param list
+   * @return
+   */
+  public static List<Object> createClassnameDictionary(List<Object> list) throws WarpScriptException {
+    List<Object> res = new ArrayList<>(list.size());
+
+    for (Object o: list) {
+      if (o instanceof GeoTimeSerie) {
+        GeoTimeSerie gts = (GeoTimeSerie) o;
+
+        if (!res.contains(gts.getName())) {
+          res.add(gts.getName());
+        }
+
+      } else if (o instanceof GTSEncoder) {
+        GTSEncoder encoder = (GTSEncoder) o;
+
+        if (null != encoder.getRawMetadata() && null != encoder.getRawMetadata().getName() && !res.contains(encoder.getRawMetadata().getName())) {
+          res.add(encoder.getRawMetadata().getName());
+        }
+
+      } else {
+        throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
+      }
+    }
+
+    return res;
+  }
+
+  /**
+   * Create initial dictionary of all values related to a label key or attribute key.
+   * @param list
+   * @param key
+   * @return
+   * @throws WarpScriptException
+   */
+  public static List<Object> createLabelorAttributeValueDictionary(List<Object> list, String key) throws WarpScriptException {
+    List<Object> res = new ArrayList<>();
+
+    for (Object o: list) {
+      if (o instanceof GeoTimeSerie) {
+        GeoTimeSerie gts = (GeoTimeSerie) o;
+
+        if (null != gts.getLabels().get(key) && !res.contains(gts.getLabels().get(key))) {
+          res.add(gts.getLabels().get(key));
+        }
+
+        if (null != gts.getMetadata().getAttributes().get(key) && !res.contains(gts.getMetadata().getAttributes().get(key))) {
+          res.add(gts.getMetadata().getAttributes().get(key));
+        }
+
+      } else if (o instanceof GTSEncoder) {
+        GTSEncoder encoder = (GTSEncoder) o;
+
+        if (null != encoder.getRawMetadata() && null != encoder.getRawMetadata().getLabels() && null != encoder.getRawMetadata().getLabels().get(key) && !res.contains(encoder.getRawMetadata().getLabels().get(key))) {
+          res.add((encoder.getRawMetadata().getLabels().get(key)));
+        }
+
+        if (null != encoder.getRawMetadata() && null != encoder.getRawMetadata().getAttributes() && null != encoder.getRawMetadata().getAttributes().get(key) && !res.contains(encoder.getRawMetadata().getAttributes().get(key))) {
+          res.add((encoder.getRawMetadata().getAttributes().get(key)));
+        }
+
+      } else {
+        throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
+      }
+    }
+
+    return res;
   }
 
   /**
@@ -149,7 +220,7 @@ public class WarpBow {
    * @return
    * @throws WarpScriptException
    */
-  public static WarpBow GtsOrEncoderListSchema(List<Object> list) throws WarpScriptException {
+  public static WarpSchema GtsOrEncoderListSchema(List<Object> list) throws WarpScriptException {
     for (Object o: list) {
       if (!(o instanceof GeoTimeSerie) && !(o instanceof GTSEncoder)) {
         throw new WarpScriptException("Input list should contain only GTS or GTSENCODER.");
@@ -174,7 +245,7 @@ public class WarpBow {
         GeoTimeSerie gts = (GeoTimeSerie) o;
 
         if (!namePool.contains(ClassnameWarpField.CLASSNAME_KEY)) {
-          fields.add(new ClassnameWarpField());
+          fields.add(new ClassnameWarpField(createClassnameDictionary(list)));
           namePool.add(ClassnameWarpField.CLASSNAME_KEY);
         }
 
@@ -182,7 +253,7 @@ public class WarpBow {
         for (String key: labels.keySet()) {
 
           if(!namePool.contains(key)) {
-            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.LABEL)); // id 0 is reserved for classname if field is used
+            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.LABEL, createLabelorAttributeValueDictionary(list, key))); // id 0 is reserved for classname if field is used
             namePool.add(key);
           }
         }
@@ -191,7 +262,7 @@ public class WarpBow {
         for (String key: attributes.keySet()) {
 
           if(!namePool.contains(key)) {
-            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.ATTRIBUTE));
+            fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.ATTRIBUTE, createLabelorAttributeValueDictionary(list, key)));
             namePool.add(key);
           }
         }
@@ -201,7 +272,7 @@ public class WarpBow {
 
         if (encoder.getName().length() > 0) {
           if (!namePool.contains(ClassnameWarpField.CLASSNAME_KEY)) {
-            fields.add(new ClassnameWarpField());
+            fields.add(new ClassnameWarpField(createClassnameDictionary(list)));
             namePool.add(ClassnameWarpField.CLASSNAME_KEY);
           }
         }
@@ -212,7 +283,7 @@ public class WarpBow {
           for (String key: labels.keySet()) {
 
             if(!namePool.contains(key)) {
-              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.LABEL)); // id 0 is reserved for classname if field is used
+              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.LABEL, createLabelorAttributeValueDictionary(list, key))); // id 0 is reserved for classname if field is used
               namePool.add(key);
             }
           }
@@ -221,7 +292,7 @@ public class WarpBow {
           for (String key: attributes.keySet()) {
 
             if(!namePool.contains(key)) {
-              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.ATTRIBUTE));
+              fields.add(new LabelWarpField(key, ++nLabelsOrAttributes, LabelWarpField.Type.ATTRIBUTE, createLabelorAttributeValueDictionary(list, key)));
               namePool.add(key);
             }
           }
@@ -364,7 +435,7 @@ public class WarpBow {
     metadata.put(REV, Revision.REVISION);
     metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 
-    return new WarpBow(metadata, fields);
+    return new WarpSchema(metadata, fields);
   }
 
   /**
@@ -523,6 +594,14 @@ public class WarpBow {
       set(i, dataPointHolder);
     }
 
+    //
+    // dictionaries
+    // This part is skipped since right now Java arrow library does not support interlevead dictionary batch messages (this is a bug)
+    //
+    //writer.writeDictionaryBatch();
+    //clearDictionaries();
+
+    // records
     root.setRowCount(gts.size());
     writer.writeBatch();
   }
@@ -537,11 +616,25 @@ public class WarpBow {
       set(i++, dataPointHolder);
     }
 
+    //
+    // dictionaries
+    // This part is skipped since right now Java arrow library does not support interlevead dictionary batch messages (this is a bug)
+    //
+    //writer.writeDictionaryBatch();
+    //clearDictionaries();
+
+    // records
     root.setRowCount(i);
     writer.writeBatch();
   }
 
-  public void writeListToStream(OutputStream out, List<Objects> list) throws WarpScriptException {
+  /**
+   * Write a list of GTS, GTSEncoder to the a Stream, wrt this schema.
+   * @param out
+   * @param list
+   * @throws WarpScriptException
+   */
+  public void writeListToStream(OutputStream out, List<Object> list) throws WarpScriptException {
     try (ArrowStreamWriter writer =  new ArrowStreamWriter(root, dictionaryProvider, out)) {
 
       writer.start();

@@ -36,7 +36,7 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
 
   public enum Type {
     LABEL,
-    ATTRIBUTE;
+    ATTRIBUTE
   }
   private final Type type;
 
@@ -68,6 +68,34 @@ public class LabelWarpField extends DictionaryEncodedWarpField {
 
   public LabelWarpField(BufferAllocator allocator, String labelKey, int dictionaryId, Type type) {
     super(allocator);
+
+    if (reservedFieldNames.contains(labelKey)) {
+      throw new RuntimeException("Label key '" + labelKey + "' is reserved by serialization process. Please rename it.");
+    }
+
+    this.labelKey = labelKey;
+    encoding = new DictionaryEncoding(dictionaryId, false, INDEX_TYPE);
+    indexField = new Field(labelKey, new FieldType(true, INDEX_TYPE, encoding), null);
+    dictionaryField = Field.nullable(labelKey + "::dictionary", new ArrowType.Utf8());
+    this.type = type;
+  }
+
+  public LabelWarpField(String labelKey, int dictionaryId, Type type, List<Object> initialDictionary){
+    super(initialDictionary);
+
+    if (reservedFieldNames.contains(labelKey)) {
+      throw new RuntimeException("Label key '" + labelKey + "' is reserved by serialization process. Please rename it.");
+    }
+
+    this.labelKey = labelKey;
+    encoding = new DictionaryEncoding(dictionaryId, false, INDEX_TYPE);
+    indexField = new Field(labelKey, new FieldType(true, INDEX_TYPE, encoding), null);
+    dictionaryField = Field.nullable(labelKey + "::dictionary", new ArrowType.Utf8());
+    this.type = type;
+  }
+
+  public LabelWarpField(BufferAllocator allocator, String labelKey, int dictionaryId, Type type, List<Object> initialDictionary) {
+    super(allocator, initialDictionary);
 
     if (reservedFieldNames.contains(labelKey)) {
       throw new RuntimeException("Label key '" + labelKey + "' is reserved by serialization process. Please rename it.");

@@ -1,3 +1,4 @@
+//
 // Copyright 2019 SenX
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -267,7 +268,7 @@ public class ArrowExtensionTest {
     MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
     stack.maxLimits();
 
-    int size = 10000;
+    int size = 10;
     int N = 10;
     List<GeoTimeSerie> list = new ArrayList<>(N);
 
@@ -307,7 +308,7 @@ public class ArrowExtensionTest {
     stack.push(metadata);
     stack.exec("SIZE 3 ==");
 
-    Map<String, Object> cols = (Map<String, Object>) res.get(1);
+    Map<String, List> cols = (Map<String, List>) res.get(1);
 
     Assert.isTrue(cols.containsKey(ClassnameWarpField.CLASSNAME_KEY));
     Assert.isTrue(cols.containsKey("type"));
@@ -325,16 +326,15 @@ public class ArrowExtensionTest {
         long elevation = GTSHelper.elevationAtIndex(list.get(j), i);
         long val = (Long) GTSHelper.valueAtIndex(list.get(j), i);
 
-        // Right now reading dictionary encoded col is not supported
-        //Assert.isTrue(((List) cols.get(ClassnameWarpField.CLASSNAME_KEY)).get(count).equals("longGTS"));
-        //Assert.isTrue(cols.get("type").equals("LONG"));
-        //Assert.isTrue(cols.get("id").equals(String.valueOf(j)));
+        Assert.isTrue(cols.get(ClassnameWarpField.CLASSNAME_KEY).get(count).equals("longGTS"));
+        Assert.isTrue(cols.get("type").get(count).equals("LONG"));
+        Assert.isTrue(cols.get("id").get(count).equals(String.valueOf(j)));
 
-        Assert.isTrue(tick == (Long) ((List) cols.get(TimestampWarpField.TIMESTAMPS_KEY)).get(count));
-        Assert.isTrue(doubleEquality((Double) ((List) cols.get(LatitudeWarpField.LATITUDE_KEY)).get(count), location[0]));
-        Assert.isTrue(doubleEquality((Double) ((List) cols.get(LongitudeWarpField.LONGITUDE_KEY)).get(count), location[1]));
-        Assert.isTrue(elevation == (Long) ((List) cols.get(ElevationWarpField.ELEVATION_KEY)).get(count));
-        Assert.isTrue(val == (Long) ((List) cols.get(ValueWarpField.LONG_VALUES_KEY)).get(count));
+        Assert.isTrue(tick == (Long) cols.get(TimestampWarpField.TIMESTAMPS_KEY).get(count));
+        Assert.isTrue(doubleEquality((Double) cols.get(LatitudeWarpField.LATITUDE_KEY).get(count), location[0]));
+        Assert.isTrue(doubleEquality((Double) cols.get(LongitudeWarpField.LONGITUDE_KEY).get(count), location[1]));
+        Assert.isTrue(elevation == (Long) cols.get(ElevationWarpField.ELEVATION_KEY).get(count));
+        Assert.isTrue(val == (Long) cols.get(ValueWarpField.LONG_VALUES_KEY).get(count));
         count++;
       }
     }
