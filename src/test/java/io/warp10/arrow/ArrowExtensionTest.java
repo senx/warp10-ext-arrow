@@ -45,7 +45,7 @@ import java.util.Random;
 
 public class ArrowExtensionTest {
 
-  private static double ERROR = 1e-5;
+  private static double ERROR = 1e-4;
   private static boolean doubleEquality(double a, double b) {
     return Math.abs(a - b) < ERROR;
   }
