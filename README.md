@@ -13,7 +13,7 @@ Arrow format is tabular and is composed of a set of fields (i.e. named columns).
 </pre>
 
 Input:
- * a LIST containing either GTS or GTSENCODER.
+ * a LIST containing either GTS or GTSENCODER instances.
 
 The output has at least a `classname` field, and a `timestamp` field. Then depending if they would not be empty, it can also have one field per GTS label or attribute key found in the input data, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.
 
@@ -38,4 +38,4 @@ Suported output is decided by the value of the metadata *WarpScriptType*:
 
 #### Build notes
 
-Depends on rev >= 2.2
+Depends on rev >= 2.2.0
