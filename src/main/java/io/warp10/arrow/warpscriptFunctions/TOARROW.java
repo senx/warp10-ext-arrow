@@ -50,15 +50,20 @@ public class TOARROW extends FormattedWarpScriptFunction {
   public TOARROW(String name) {
     super(name);
 
-    getDocstring().append("Encode an object into a byte array in Arrow streaming format.");
+    getDocstring().append("Conversion to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).\n" +
+      "\n" +
+      "Arrow format is tabular and is composed of a set of fields (i.e. named columns). It can also be associated with a map of metadata.\n" +
+      "The output has at least a `classname` field, and a `timestamp` field. Then depending if they would not be empty, it can also have one field per GTS label or attribute key found in the input data, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.\n" +
+      "\n" +
+      "Note that data points from different input GTS or GTSENCODER that are of the same type are in the same column. They can be identified by the `classname` and label related fields.");
 
     args =  new ArgumentsBuilder()
-      .addArgument(Object.class, IN, "The object to be converted: GTS, GTSENCODER, a LIST containing GTS and/or GTSENCODER, or a pair LIST of MAP: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).")
+      .addArgument(Object.class, IN, "A LIST containing GTS or GTSENCODER instances. For other supported types, see the README of the warp10-ext-arrow extension.")
       .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
 
     output = new ArgumentsBuilder()
-      .addArgument(byte[].class, OUT, "The resulting byte stream.")
+      .addArgument(byte[].class, OUT, "The resulting byte array.")
       .build();
   }
 
@@ -98,6 +103,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
       if (list.get(0) instanceof  Map) {
 
+        //
+        // The most generic behaviour
+        //
+
         if (2 != list.size() || !(list.get(0) instanceof Map) || !(list.get(1) instanceof Map)) {
           throw new WarpScriptException("When " + getName() + "'s input is a pair LIST of Map, it expects two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).");
         }
@@ -128,6 +137,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
         stack.push(out.toByteArray());
 
       } else {
+
+        //
+        // This is the main behaviour
+        //
 
         if (0 != nTicksPerBatch) {
           throw new WarpScriptException(BATCH_SIZE + " argument is unused for input of this type. It should not be set.");
