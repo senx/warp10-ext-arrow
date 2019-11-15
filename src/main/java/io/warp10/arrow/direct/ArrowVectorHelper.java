@@ -680,15 +680,15 @@ public class ArrowVectorHelper {
     //
 
     if (null != schema.getCustomMetadata().get(LASTBUCKET)) {
-      GTSHelper.setLastBucket(gts, Integer.valueOf(schema.getCustomMetadata().get(LASTBUCKET)).intValue());
+      GTSHelper.setLastBucket(gts, Long.valueOf(schema.getCustomMetadata().get(LASTBUCKET)).intValue());
     }
 
     if (null != schema.getCustomMetadata().get(BUCKETSPAN)) {
-      GTSHelper.setBucketSpan(gts, Integer.valueOf(schema.getCustomMetadata().get(BUCKETSPAN)).intValue());
+      GTSHelper.setBucketSpan(gts, Long.valueOf(schema.getCustomMetadata().get(BUCKETSPAN)).intValue());
     }
 
     if (null != schema.getCustomMetadata().get(BUCKETCOUNT)) {
-      GTSHelper.setBucketCount(gts, Integer.valueOf(schema.getCustomMetadata().get(BUCKETCOUNT)).intValue());
+      GTSHelper.setBucketCount(gts, Long.valueOf(schema.getCustomMetadata().get(BUCKETCOUNT)).intValue());
     }
 
     //
