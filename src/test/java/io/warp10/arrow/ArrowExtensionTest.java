@@ -62,6 +62,17 @@ public class ArrowExtensionTest {
   private final static Random rng = new SecureRandom();
 
   @Test
+  public void testNoError() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+
+    stack.exec("[ @senx/dataset/temperature bucketizer.mean 0 1 w 0 ] BUCKETIZE ->ARROW ARROW->");
+    //System.out.println(stack.dump(100));
+    stack.drop();
+  }
+
+  @Test
   public void roundTripLongGTS() throws Exception {
 
     MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);

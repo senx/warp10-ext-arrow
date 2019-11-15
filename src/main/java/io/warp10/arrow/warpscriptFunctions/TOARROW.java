@@ -101,7 +101,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
         throw new WarpScriptException(getName() + " received an empty list.");
       }
 
-      if (list.get(0) instanceof  Map) {
+      if (list.get(0) instanceof Map) {
 
         //
         // The most generic behaviour
