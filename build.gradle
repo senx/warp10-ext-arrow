@@ -181,6 +181,10 @@ shadowJar {
     include 'README.md'
     include 'io.warp10.ml-warp10-ext-forecasting.conf'
   }
+
+  dependencies {
+    exclude(dependency('org.slf4j::'))
+  }
 }
 
 shadowJar.dependsOn(test)
