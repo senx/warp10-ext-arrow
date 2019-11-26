@@ -26,11 +26,13 @@ import io.warp10.arrow.pojo.LatitudeWarpField;
 import io.warp10.arrow.pojo.LongitudeWarpField;
 import io.warp10.arrow.pojo.TimestampWarpField;
 import io.warp10.arrow.pojo.ValueWarpField;
+import io.warp10.arrow.warpscriptFunctions.ARROWTO;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
 import io.warp10.script.MemoryWarpScriptStack;
 import io.warp10.script.WarpScriptLib;
+import io.warp10.script.WarpScriptStackFunction;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -350,4 +352,39 @@ public class ArrowExtensionTest {
       }
     }
   }
+
+  @Test
+  public void warpscriptTest_0() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+
+    //
+    // Test that this warpscript exec without errors
+    //
+
+    String script = "NEWGTS 'a' RENAME { 'k' 'v' 'kk' 'vv' } RELABEL\n" +
+      "0 NaN NaN NaN 1.0 ADDVALUE\n" +
+      "4 NaN NaN NaN 1.0 ADDVALUE\n" +
+      "'a' STORE\n" +
+      "\n" +
+      "NEWGTS 'b' RENAME { 'k' 'b' 'kk' 'vb' 'u' 'nn' } RELABEL\n" +
+      "1 NaN NaN NaN 1.1 ADDVALUE\n" +
+      "'b' STORE\n" +
+      "\n" +
+      "$a ->ARROW ARROW->\n" +
+      "[ $a ] ->ARROW ARROW->\n" +
+      "[ $a $b ] ->ARROW";
+
+    stack.execMulti(script);
+
+    // isolate bug for better stack trace
+    WarpScriptStackFunction from = new ARROWTO("from");
+    from.apply(stack);
+  }
+
+
+
+
+
 }

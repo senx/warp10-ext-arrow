@@ -920,113 +920,111 @@ public class ArrowVectorHelper {
 
         for (Field field: schema.getFields()) {
           String name = field.getName();
+          if (null == res.get(name)) {
+            res.put(name, new ArrayList<String>());
+          }
+
           root.getVector(name).getReader().setPosition(i);
+          if (!root.getVector(name).getReader().isSet()) {
+            res.get(name).add(null);
 
-          switch (field.getFieldType().getType().getTypeID()) {
+          } else {
 
-            case Int:
-              if (null == res.get(name)) {
-                res.put(name, new ArrayList<Long>());
-              }
+            switch (field.getFieldType().getType().getTypeID()) {
 
-              if (!((ArrowType.Int) field.getFieldType().getType()).getIsSigned()) {
-                throw new RuntimeException("Unsigned int not supported.");
-              }
+              case Int:
 
-              long val;
-              int bitWidth = ((ArrowType.Int) field.getFieldType().getType()).getBitWidth();
-              if (64 == bitWidth) {
-                val = root.getVector(name).getReader().readLong().longValue();
-              } else if (32 == bitWidth) {
-                val = root.getVector(name).getReader().readInteger().longValue();
-              } else if (16 == bitWidth) {
-                val = root.getVector(name).getReader().readShort().longValue();
-              } else {
-                throw new WarpScriptException("Int bit width other than 16, 32 or 64 are not supported.");
-              }
-
-              DictionaryEncoding encoding = field.getDictionary();
-              if (null == encoding) {
-                res.get(name).add(val);
-              } else {
-                if (!dictionaries.get(encoding.getId()).getVectorType().getTypeID().equals(ArrowType.Utf8.TYPE_TYPE)) {
-                  throw new WarpScriptException("Dictionary encoding only support String values.");
+                if (!((ArrowType.Int) field.getFieldType().getType()).getIsSigned()) {
+                  throw new RuntimeException("Unsigned int not supported.");
                 }
 
-                FieldVector vector = dictionaries.get(encoding.getId()).getVector();
-                vector.getReader().setPosition((int) val);
-                res.get(name).add(vector.getReader().readText().toString());
+                long val;
+                int bitWidth = ((ArrowType.Int) field.getFieldType().getType()).getBitWidth();
+                if (64 == bitWidth) {
+                  val = root.getVector(name).getReader().readLong().longValue();
+                } else if (32 == bitWidth) {
+                  val = root.getVector(name).getReader().readInteger().longValue();
+                } else if (16 == bitWidth) {
+                  val = root.getVector(name).getReader().readShort().longValue();
+                } else {
+                  throw new WarpScriptException("Int bit width other than 16, 32 or 64 are not supported.");
+                }
 
-              }
+                DictionaryEncoding encoding = field.getDictionary();
+                if (null == encoding) {
+                  res.get(name).add(val);
+                } else {
+                  if (!dictionaries.get(encoding.getId()).getVectorType().getTypeID().equals(ArrowType.Utf8.TYPE_TYPE)) {
+                    throw new WarpScriptException("Dictionary encoding only support String values.");
+                  }
 
-              break;
+                  FieldVector vector = dictionaries.get(encoding.getId()).getVector();
+                  vector.getReader().setPosition((int) val);
+                  res.get(name).add(vector.getReader().readText().toString());
 
-            case FloatingPoint:
+                }
 
-              if (null == res.get(name)) {
-                res.put(name, new ArrayList<Double>());
-              }
-              switch (((ArrowType.FloatingPoint) field.getFieldType().getType()).getPrecision()) {
-                case HALF:
-                  if (true) throw new WarpScriptException("Floating point precision other than 32 or 64 bits are not supported.");
-                  break;
+                break;
 
-                case SINGLE: // 32-bit
-                  res.get(name).add(root.getVector(name).getReader().readFloat().doubleValue());
-                  break;
+              case FloatingPoint:
 
-                case DOUBLE: // 64-bit
-                  res.get(name).add(root.getVector(name).getReader().readDouble().doubleValue());
-                  break;
-              }
-              break;
+                switch (((ArrowType.FloatingPoint) field.getFieldType().getType()).getPrecision()) {
+                  case HALF:
+                    if (true)
+                      throw new WarpScriptException("Floating point precision other than 32 or 64 bits are not supported.");
+                    break;
 
-            case Utf8:
+                  case SINGLE: // 32-bit
+                    res.get(name).add(root.getVector(name).getReader().readFloat().doubleValue());
+                    break;
 
-              if (null == res.get(name)) {
-                res.put(name, new ArrayList<String>());
-              }
-              res.get(name).add(root.getVector(name).getReader().readText().toString());
-              break;
+                  case DOUBLE: // 64-bit
+                    res.get(name).add(root.getVector(name).getReader().readDouble().doubleValue());
+                    break;
+                }
+                break;
 
-            case Binary:
+              case Utf8:
 
-              if (null == res.get(name)) {
-                res.put(name, new ArrayList<String>());
-              }
-              res.get(name).add(Base64.getEncoder().encodeToString(root.getVector(name).getReader().readByteArray()));
-              break;
+                res.get(name).add(root.getVector(name).getReader().readText().toString());
+                break;
 
-            case Bool:
+              case Binary:
 
-              if (null == res.get(name)) {
-                res.put(name, new ArrayList<String>());
-              }
-              res.get(name).add(root.getVector(name).getReader().readByte() == 1);
-              break;
+                res.get(name).add(Base64.getEncoder().encodeToString(root.getVector(name).getReader().readByteArray()));
+                break;
 
-            case FixedSizeBinary:
-            case Decimal:
-              if (true) throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not yet supported"); // TODO
-              break;
+              case Bool:
 
-            case Date:
-            case Time:
-            case Timestamp:
-            case Interval:
-            case Duration:
-              if (true) throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not yet supported"); // maybe should support ?
-              break;
+                res.get(name).add(root.getVector(name).getReader().readByte() == 1);
+                break;
 
-            case Null:
-            case Struct:
-            case List:
-            case FixedSizeList:
-            case Union:
-            case Map:
-            case NONE:
-              if (true) throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not supported");
-              break;
+              case FixedSizeBinary:
+              case Decimal:
+                if (true)
+                  throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not yet supported"); // TODO
+                break;
+
+              case Date:
+              case Time:
+              case Timestamp:
+              case Interval:
+              case Duration:
+                if (true)
+                  throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not yet supported"); // maybe should support ?
+                break;
+
+              case Null:
+              case Struct:
+              case List:
+              case FixedSizeList:
+              case Union:
+              case Map:
+              case NONE:
+                if (true)
+                  throw new WarpScriptException(field.getFieldType().getType().getTypeID().name() + " Arrow type not supported");
+                break;
+            }
           }
         }
       }
