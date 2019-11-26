@@ -270,7 +270,7 @@ public class WarpSchema {
       } else if (o instanceof GTSEncoder) {
         GTSEncoder encoder = (GTSEncoder) o;
 
-        if (encoder.getName().length() > 0) {
+        if (null != encoder.getName() && encoder.getName().length() > 0) {
           if (!namePool.contains(ClassnameWarpField.CLASSNAME_KEY)) {
             fields.add(new ClassnameWarpField(createClassnameDictionary(list)));
             namePool.add(ClassnameWarpField.CLASSNAME_KEY);
@@ -301,13 +301,7 @@ public class WarpSchema {
     }
 
     //
-    // Timestamp fields (mandatory)
-    //
-
-    fields.add(new TimestampWarpField());
-
-    //
-    // Geo fields
+    // Index fields
     //
 
     for (Object o: list) {
@@ -315,45 +309,63 @@ public class WarpSchema {
       if (o instanceof GeoTimeSerie) {
         GeoTimeSerie gts = (GeoTimeSerie) o;
 
-        if (gts.hasLocations()) {
-          if(!namePool.contains(LatitudeWarpField.LATITUDE_KEY)) {
-            fields.add(new LatitudeWarpField());
-            namePool.add(LatitudeWarpField.LATITUDE_KEY);
+        if (gts.size() > 0 ) {
+
+          if (!namePool.contains(TimestampWarpField.TIMESTAMPS_KEY)) {
+            fields.add(new TimestampWarpField());
+            namePool.add(TimestampWarpField.TIMESTAMPS_KEY);
           }
 
-          if(!namePool.contains(LongitudeWarpField.LONGITUDE_KEY)) {
-            fields.add(new LongitudeWarpField());
-            namePool.add(LongitudeWarpField.LONGITUDE_KEY);
-          }
-        }
 
-        if (gts.hasElevations()) {
-          if(!namePool.contains(ElevationWarpField.ELEVATION_KEY)) {
-            fields.add(new ElevationWarpField());
-            namePool.add(ElevationWarpField.ELEVATION_KEY);
+          if (gts.hasLocations()) {
+            if (!namePool.contains(LatitudeWarpField.LATITUDE_KEY)) {
+              fields.add(new LatitudeWarpField());
+              namePool.add(LatitudeWarpField.LATITUDE_KEY);
+            }
+
+            if (!namePool.contains(LongitudeWarpField.LONGITUDE_KEY)) {
+              fields.add(new LongitudeWarpField());
+              namePool.add(LongitudeWarpField.LONGITUDE_KEY);
+            }
           }
+
+          if (gts.hasElevations()) {
+            if (!namePool.contains(ElevationWarpField.ELEVATION_KEY)) {
+              fields.add(new ElevationWarpField());
+              namePool.add(ElevationWarpField.ELEVATION_KEY);
+            }
+          }
+
         }
 
       } else if (o instanceof GTSEncoder) {
         GTSEncoder encoder = (GTSEncoder) o;
 
-        //
-        // Here we must add every fields since we don't know yet if they would be empty
-        //
+        if (encoder.getCount() > 0) {
 
-        if(!namePool.contains(LatitudeWarpField.LATITUDE_KEY)) {
-          fields.add(new LatitudeWarpField());
-          namePool.add(LatitudeWarpField.LATITUDE_KEY);
-        }
+          //
+          // Here we must add every fields since we don't know yet if they would be empty
+          //
 
-        if(!namePool.contains(LongitudeWarpField.LONGITUDE_KEY)) {
-          fields.add(new LongitudeWarpField());
-          namePool.add(LongitudeWarpField.LONGITUDE_KEY);
-        }
+          if (!namePool.contains(TimestampWarpField.TIMESTAMPS_KEY)) {
+            fields.add(new TimestampWarpField());
+            namePool.add(TimestampWarpField.TIMESTAMPS_KEY);
+          }
 
-        if(!namePool.contains(ElevationWarpField.ELEVATION_KEY)) {
-          fields.add(new ElevationWarpField());
-          namePool.add(ElevationWarpField.ELEVATION_KEY);
+          if (!namePool.contains(LatitudeWarpField.LATITUDE_KEY)) {
+            fields.add(new LatitudeWarpField());
+            namePool.add(LatitudeWarpField.LATITUDE_KEY);
+          }
+
+          if (!namePool.contains(LongitudeWarpField.LONGITUDE_KEY)) {
+            fields.add(new LongitudeWarpField());
+            namePool.add(LongitudeWarpField.LONGITUDE_KEY);
+          }
+
+          if (!namePool.contains(ElevationWarpField.ELEVATION_KEY)) {
+            fields.add(new ElevationWarpField());
+            namePool.add(ElevationWarpField.ELEVATION_KEY);
+          }
         }
       }
     }
@@ -367,34 +379,37 @@ public class WarpSchema {
       if (o instanceof GeoTimeSerie) {
         GeoTimeSerie gts = (GeoTimeSerie) o;
 
-        switch (gts.getType()) {
-          case LONG:
-            if(!namePool.contains(ValueWarpField.LONG_VALUES_KEY)) {
-              fields.add(new ValueWarpField(ValueWarpField.Type.LONG));
-              namePool.add(ValueWarpField.LONG_VALUES_KEY);
-            }
-            break;
+        if (gts.size() > 0) {
 
-          case DOUBLE:
-            if(!namePool.contains(ValueWarpField.DOUBLE_VALUES_KEY)) {
-              fields.add(new ValueWarpField(ValueWarpField.Type.DOUBLE));
-              namePool.add(ValueWarpField.DOUBLE_VALUES_KEY);
-            }
-            break;
+          switch (gts.getType()) {
+            case LONG:
+              if (!namePool.contains(ValueWarpField.LONG_VALUES_KEY)) {
+                fields.add(new ValueWarpField(ValueWarpField.Type.LONG));
+                namePool.add(ValueWarpField.LONG_VALUES_KEY);
+              }
+              break;
 
-          case BOOLEAN:
-            if(!namePool.contains(ValueWarpField.BOOLEAN_VALUES_KEY)) {
-              fields.add(new ValueWarpField(ValueWarpField.Type.BOOLEAN));
-              namePool.add(ValueWarpField.BOOLEAN_VALUES_KEY);
-            }
-            break;
+            case DOUBLE:
+              if (!namePool.contains(ValueWarpField.DOUBLE_VALUES_KEY)) {
+                fields.add(new ValueWarpField(ValueWarpField.Type.DOUBLE));
+                namePool.add(ValueWarpField.DOUBLE_VALUES_KEY);
+              }
+              break;
 
-          case STRING:
-            if(!namePool.contains(ValueWarpField.STRING_VALUES_KEY)) {
-              fields.add(new ValueWarpField(ValueWarpField.Type.STRING));
-              namePool.add(ValueWarpField.STRING_VALUES_KEY);
-            }
-            break;
+            case BOOLEAN:
+              if (!namePool.contains(ValueWarpField.BOOLEAN_VALUES_KEY)) {
+                fields.add(new ValueWarpField(ValueWarpField.Type.BOOLEAN));
+                namePool.add(ValueWarpField.BOOLEAN_VALUES_KEY);
+              }
+              break;
+
+            case STRING:
+              if (!namePool.contains(ValueWarpField.STRING_VALUES_KEY)) {
+                fields.add(new ValueWarpField(ValueWarpField.Type.STRING));
+                namePool.add(ValueWarpField.STRING_VALUES_KEY);
+              }
+              break;
+          }
         }
 
       } else if (o instanceof GTSEncoder) {
@@ -447,7 +462,7 @@ public class WarpSchema {
   public void prepareGtsDataPoint(int index, GeoTimeSerie gts) throws WarpScriptException {
 
     double[] geoPointHolder = null;
-    if (gts.hasElevations()) {
+    if (gts.size() > 0 && gts.hasLocations()) {
       long location = GTSHelper.locationAtIndex(gts, index);
       if (GeoTimeSerie.NO_LOCATION != location) {
         geoPointHolder = GeoXPLib.fromGeoXPPoint(location);
@@ -474,7 +489,7 @@ public class WarpSchema {
         }
 
       } else if (warpField instanceof TimestampWarpField) {
-        dataPointHolder[i] = GTSHelper.tickAtIndex(gts, index);
+        dataPointHolder[i] = gts.size() > 0 ? GTSHelper.tickAtIndex(gts, index) : null;
 
       } else if (warpField instanceof LatitudeWarpField) {
         if (null == geoPointHolder) {
@@ -491,19 +506,29 @@ public class WarpSchema {
         }
 
       } else if (warpField instanceof ElevationWarpField) {
-        long elevation = GTSHelper.elevationAtIndex(gts, index);
-
-        if (GeoTimeSerie.NO_ELEVATION == elevation) {
+        if (gts.size() == 0) {
           dataPointHolder[i] = null;
+
         } else {
-          dataPointHolder[i] = elevation;
+          long elevation = GTSHelper.elevationAtIndex(gts, index);
+
+          if (GeoTimeSerie.NO_ELEVATION == elevation) {
+            dataPointHolder[i] = null;
+          } else {
+            dataPointHolder[i] = elevation;
+          }
         }
 
       } else if (warpField instanceof ValueWarpField) {
-        Object value = GTSHelper.valueAtIndex(gts, index);
+        if (gts.size() > 0) {
 
-        if (((ValueWarpField) warpField).getType().getCorrespondingClass() == value.getClass()) {
-          dataPointHolder[i] = value;
+          Object value = GTSHelper.valueAtIndex(gts, index);
+
+          if (((ValueWarpField) warpField).getType().getCorrespondingClass() == value.getClass()) {
+            dataPointHolder[i] = value;
+          } else {
+            dataPointHolder[i] = null;
+          }
         } else {
           dataPointHolder[i] = null;
         }
@@ -588,44 +613,65 @@ public class WarpSchema {
   }
 
   public void writeGTS(ArrowStreamWriter writer, GeoTimeSerie gts) throws IOException, WarpScriptException {
-    for (int i = 0; i < gts.size(); i++) {
-      prepareGtsDataPoint(i, gts);
 
-      set(i, dataPointHolder);
+    if (gts.size() > 0) {
+
+      for (int i = 0; i < gts.size(); i++) {
+        prepareGtsDataPoint(i, gts);
+        set(i, dataPointHolder);
+      }
+
+      //
+      // dictionaries
+      // This part is skipped since right now Java arrow library does not support interleaved dictionary batch messages (this is a bug)
+      //
+      //writer.writeDictionaryBatch();
+      //clearDictionaries();
+
+      // records
+      root.setRowCount(gts.size());
+
+    } else {
+
+      //
+      // Empty GTS (only convert metadata)
+      //
+
+      prepareGtsDataPoint(-1, gts);
+      set(0, dataPointHolder);
+      root.setRowCount(1);
     }
 
-    //
-    // dictionaries
-    // This part is skipped since right now Java arrow library does not support interlevead dictionary batch messages (this is a bug)
-    //
-    //writer.writeDictionaryBatch();
-    //clearDictionaries();
-
-    // records
-    root.setRowCount(gts.size());
     writer.writeBatch();
   }
 
   public void writeGtsEncoder(ArrowStreamWriter writer, GTSEncoder encoder) throws IOException, WarpScriptException {
     GTSDecoder decoder = encoder.getDecoder(true);
 
-    int i = 0;
-    while (decoder.next()) {
-      prepareGtsEncoderDataPoint(decoder);
+    if (decoder.getCount() > 0) {
+      int i = 0;
+      while (decoder.next()) {
+        prepareGtsEncoderDataPoint(decoder);
 
-      set(i++, dataPointHolder);
+        set(i++, dataPointHolder);
+      }
+
+      //
+      // dictionaries
+      // This part is skipped since right now Java arrow library does not support interlevead dictionary batch messages (this is a bug)
+      //
+      //writer.writeDictionaryBatch();
+      //clearDictionaries();
+
+      // records
+      root.setRowCount(i);
+      writer.writeBatch();
+
+    } else {
+      GeoTimeSerie gts = new GeoTimeSerie();
+      gts.setMetadata(decoder.getMetadata());
+      writeGTS(writer, gts);
     }
-
-    //
-    // dictionaries
-    // This part is skipped since right now Java arrow library does not support interlevead dictionary batch messages (this is a bug)
-    //
-    //writer.writeDictionaryBatch();
-    //clearDictionaries();
-
-    // records
-    root.setRowCount(i);
-    writer.writeBatch();
   }
 
   /**

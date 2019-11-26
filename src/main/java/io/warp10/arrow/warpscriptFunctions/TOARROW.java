@@ -53,8 +53,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
     getDocstring().append("Conversion to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).\n" +
       "\n" +
       "Arrow format is tabular and is composed of a set of fields (i.e. named columns). It can also be associated with a map of metadata.\n" +
-      "The output has at least a `classname` field, and a `timestamp` field. Then depending if they would not be empty, it can also have one field per GTS label or attribute key found in the input data, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.\n" +
+      "The principle input type is a LIST containing GTS or GTSENCODER.\n" +
+      "The output has at least a `classname` field, and a field per existing GTS label key and attribute. Then, depending if they would not be empty it can have a `timestamp` field, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.\n" +
       "\n" +
+      "The classnames and labels are repeated on each row with data from the same input GTS (but they are dictionary-encoded so it is memory efficient).\n" +
       "Note that data points from different input GTS or GTSENCODER that are of the same type are in the same column. They can be identified by the `classname` and label related fields.");
 
     args =  new ArgumentsBuilder()
@@ -75,6 +77,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
     if (in instanceof GeoTimeSerie) {
 
       GeoTimeSerie gts = (GeoTimeSerie) in;
+      if (0 == gts.size()) {
+        throw new WarpScriptException("Input is empty.");
+      }
+
       if (0 == nTicksPerBatch) {
         nTicksPerBatch = gts.size();
       }
@@ -86,6 +92,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
     } else if (in instanceof GTSEncoder) {
 
       GTSEncoder encoder = (GTSEncoder) in;
+      if (0 == encoder.getCount()) {
+        throw new WarpScriptException("Input is empty.");
+      }
+
       if (0 == nTicksPerBatch) {
         nTicksPerBatch = (int) encoder.getCount();
       }

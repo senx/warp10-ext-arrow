@@ -27,12 +27,14 @@ import io.warp10.arrow.pojo.LongitudeWarpField;
 import io.warp10.arrow.pojo.TimestampWarpField;
 import io.warp10.arrow.pojo.ValueWarpField;
 import io.warp10.arrow.warpscriptFunctions.ARROWTO;
+import io.warp10.arrow.warpscriptFunctions.TOARROW;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
 import io.warp10.script.MemoryWarpScriptStack;
 import io.warp10.script.WarpScriptLib;
 import io.warp10.script.WarpScriptStackFunction;
+import io.warp10.script.functions.ASENCODERS;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -381,6 +383,76 @@ public class ArrowExtensionTest {
     // isolate bug for better stack trace
     WarpScriptStackFunction from = new ARROWTO("from");
     from.apply(stack);
+  }
+
+  @Test
+  public void warpscriptTest_1() throws Exception {
+
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
+
+    //
+    // Test that this warpscript exec without errors
+    //
+
+    String script = "NEWGTS 'a' RENAME { 'k' 'v' 'kk' 'vv' } RELABEL\n" +
+      "'a' STORE\n" +
+      "\n" +
+      "NEWGTS 'b' RENAME { 'k' 'b' 'kk' 'vb' 'u' 'nn' } RELABEL\n" +
+      "100 NaN NaN NaN 5.0 ADDVALUE\n" +
+      "'b' STORE\n" +
+      "\n" +
+      "NEWGTS 'c' RENAME { 'k' 'b' 'kk' 'vb' 'u' 'ee' } RELABEL\n" +
+      "100 RAND RAND NaN 5.0 ADDVALUE\n" +
+      "100 RAND RAND NaN 5.0 ADDVALUE\n" +
+      "'c' STORE\n" +
+      "\n" +
+      "NEWGTS 'd' RENAME { 'k' 'b' 'kk' 'vb' 'u' 'nn' } RELABEL\n" +
+      "100 NaN NaN 42 5.0 ADDVALUE\n" +
+      "'d' STORE\n" +
+      "\n" +
+      "NEWGTS 'e' RENAME { 'k' 'r' 'kk' 'vb' 'u' 'nn' 'm' 'mm' } RELABEL\n" +
+      "100 RAND RAND 42 5.0 ADDVALUE\n" +
+      "300 RAND RAND 4242 5.3 ADDVALUE\n" +
+      "'e' STORE\n";
+    stack.execMulti(script);
+
+    WarpScriptStackFunction to = new TOARROW("to");
+    WarpScriptStackFunction from = new ARROWTO("from");
+
+    List<Object> list = new ArrayList<Object>();
+    list.add(stack.load("a"));
+    stack.push(list);
+    to.apply(stack);
+    from.apply(stack);
+
+    list.add(stack.load("b"));
+    stack.push(list);
+    to.apply(stack);
+    from.apply(stack);
+
+    list.add(stack.load("c"));
+    stack.push(list);
+    to.apply(stack);
+    from.apply(stack);
+
+    list.add(stack.load("d"));
+    stack.push(list);
+    to.apply(stack);
+    from.apply(stack);
+
+    list.add(stack.load("e"));
+    stack.push(list);
+    to.apply(stack);
+    from.apply(stack);
+
+    WarpScriptStackFunction asEnc = new ASENCODERS("asEnc");
+    stack.push(list);
+    asEnc.apply(stack);
+    to.apply(stack);
+    from.apply(stack);
+
+    System.out.println(stack.dump(100));
   }
 
 
