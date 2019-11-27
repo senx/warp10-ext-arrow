@@ -41,7 +41,3 @@ Suported output is decided by the value of the metadata *WarpScriptType*:
 
 Depends on rev >= 2.2.0
 
-
-### TROUBLESHOOT
-
-After installing from [warpfleet](https://warpfleet.senx.io/), make sure the content of the file [warp10.conf](https://raw.githubusercontent.com/senx/warp10-ext-arrow/master/warp10.conf) is copied to your warp10 configuration folder.
