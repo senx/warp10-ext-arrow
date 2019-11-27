@@ -111,7 +111,27 @@ public abstract class DictionaryEncodedWarpField extends WarpField {
 
   public void setSafe(int index, Object o) {
 
-    if (null == o) return;
+    if (null == o) {
+      switch (getDictionaryEncoding().getIndexType().getBitWidth()) {
+        case 8:
+          ((TinyIntVector) getVector()).setNull(index);
+          break;
+
+        case 16:
+          ((SmallIntVector) getVector()).setNull(index);
+          break;
+
+        case 32:
+          ((IntVector) getVector()).setNull(index);
+          break;
+
+        case 64:
+        default:
+          throw new RuntimeException("Index type with bit width other than 8, 16 ot 32 are not supported.");
+      }
+
+      return;
+    }
 
     if (!(o instanceof String)) {
       throw new RuntimeException(getField() + " field expect to set input of type String.");

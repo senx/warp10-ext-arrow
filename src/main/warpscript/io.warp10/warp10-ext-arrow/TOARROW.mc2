@@ -5,7 +5,7 @@
 'deleted' '' 
 'version' 'all' 
 'tags' [ 'arrow' ] 
-'desc' 'Conversion to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).%0a%0aArrow format is tabular and is composed of a set of fields (i.e. named columns). It can also be associated with a map of metadata.%0aThe output has at least a `classname` field, and a `timestamp` field. Then depending if they would not be empty, it can also have one field per GTS label or attribute key found in the input data, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.%0a%0aNote that data points from different input GTS or GTSENCODER that are of the same type are in the same column. They can be identified by the `classname` and label related fields.' 
+'desc' 'Conversion to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).%0a%0aArrow format is tabular and is composed of a set of fields (i.e. named columns). It can also be associated with a map of metadata.%0aThe principle input type is a LIST containing GTS or GTSENCODER.%0aThe output has at least a `classname` field, and a field per existing GTS label key and attribute. Then, depending if they would not be empty it can have a `timestamp` field, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.%0a%0aThe classnames and labels are repeated on each row with data from the same input GTS (but they are dictionary-encoded so it is memory efficient).%0aNote that data points from different input GTS or GTSENCODER that are of the same type are in the same column. They can be identified by the `classname` and label related fields.' 
 'sig' [ [ [ 'in:OBJECT' ] [ 'out:BYTES' ] ] [ [ {
 'nTicksPerBatch' 'nTicksPerBatch:LONG' 
 'in' 'in:OBJECT' 
@@ -15,7 +15,7 @@
 'in' 'A LIST containing GTS or GTSENCODER instances. For other supported types, see the README of the warp10-ext-arrow extension.' 
 'out' 'The resulting byte array.' 
 } 
-'related' [ 'ARROWTO' ]
+'related' [ 'ARROWTO' 'TOARROW' ] 
 'examples' [ ] 
 'conf' [ ] 
 } 'infomap' STORE

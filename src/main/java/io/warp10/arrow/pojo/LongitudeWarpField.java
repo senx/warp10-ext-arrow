@@ -48,7 +48,10 @@ public class LongitudeWarpField extends WarpField {
 
   public void setSafe(int index, Object o) {
 
-    if (null == o) return;
+    if (null == o) {
+      ((Float4Vector)  getVector()).setNull(index);
+      return;
+    }
 
     if (!(o instanceof Double)) {
       throw new RuntimeException(getField() + " field expect to set input of type double.");

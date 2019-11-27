@@ -25,7 +25,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 public class TimestampWarpField extends WarpField {
 
   public static final String TIMESTAMPS_KEY = "timestamp";
-  private static final Field TIMESTAMP_FIELD = nonNullable(TIMESTAMPS_KEY, new ArrowType.Int(64, true));
+  private final static Field TIMESTAMP_FIELD = Field.nullable(TIMESTAMPS_KEY,new ArrowType.Int(64, true));
 
   public TimestampWarpField(){}
 
@@ -47,7 +47,10 @@ public class TimestampWarpField extends WarpField {
 
   public void setSafe(int index, Object o) {
 
-    if (null == o) return;
+    if (null == o) {
+     ((BigIntVector)  getVector()).setNull(index);
+     return;
+    }
 
     if (!(o instanceof Long)) {
       throw new RuntimeException(getField() + " field expect to set input of type Long.");

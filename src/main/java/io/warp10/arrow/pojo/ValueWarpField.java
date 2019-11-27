@@ -125,6 +125,11 @@ public class ValueWarpField extends WarpField {
 
   private void setSafeLong(int index, Object o) {
 
+    if (null == o) {
+      ((BigIntVector)  getVector()).setNull(index);
+      return;
+    }
+
     if (!(o instanceof Long)) {
       throw new RuntimeException(getField() + " field expect to set input of type long.");
     }
@@ -133,6 +138,11 @@ public class ValueWarpField extends WarpField {
   }
 
   private void setSafeDouble(int index, Object o) {
+
+    if (null == o) {
+      ((Float8Vector)  getVector()).setNull(index);
+      return;
+    }
 
     if (!(o instanceof Double)) {
       throw new RuntimeException(getField() + " field expect to set input of type double.");
@@ -143,6 +153,11 @@ public class ValueWarpField extends WarpField {
 
   private void setSafeBoolean(int index, Object o) {
 
+    if (null == o) {
+      ((BitVector)  getVector()).setNull(index);
+      return;
+    }
+
     if (!(o instanceof Boolean)) {
       throw new RuntimeException(getField() + " field expect to set input of type bolean.");
     }
@@ -151,6 +166,11 @@ public class ValueWarpField extends WarpField {
   }
 
   private void setSafeString(int index, Object o) {
+
+    if (null == o) {
+      ((VarCharVector)  getVector()).setNull(index);
+      return;
+    }
 
     if (!(o instanceof String)) {
       throw new RuntimeException(getField() + " field expect to set input of type String.");
@@ -161,6 +181,11 @@ public class ValueWarpField extends WarpField {
 
   private void setSafeBytes(int index, Object o) {
 
+    if (null == o) {
+      ((VarBinaryVector)  getVector()).setNull(index);
+      return;
+    }
+
     if (!(o instanceof byte[])) {
       throw new RuntimeException(getField() + " field expect to set input of type byte[].");
     }
@@ -169,8 +194,6 @@ public class ValueWarpField extends WarpField {
   }
 
   public void setSafe(int index, Object o) {
-
-    if (null == o) return;
 
     switch (type) {
       case LONG:

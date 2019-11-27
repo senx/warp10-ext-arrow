@@ -15,7 +15,7 @@
 'bytes' 'Arrow stream to be decoded.' 
 'result' 'The decoded object. GTS, GTSENCODER or pair LIST of metadata (a LIST) and vector fields (a MAP of LIST).' 
 } 
-'related' [ 'TOARROW' ]
+'related' [ 'ARROWTO' 'TOARROW' ] 
 'examples' [ ] 
 'conf' [ ] 
 } 'infomap' STORE

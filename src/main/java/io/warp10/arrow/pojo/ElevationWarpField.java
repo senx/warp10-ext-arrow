@@ -47,7 +47,10 @@ public class ElevationWarpField extends WarpField {
 
   public void setSafe(int index, Object o) {
 
-    if (null == o) return;
+    if (null == o) {
+      ((BigIntVector)  getVector()).setNull(index);
+      return;
+    }
 
     if (!(o instanceof Long)) {
       throw new RuntimeException(getField() + " field expect to set input of type long.");

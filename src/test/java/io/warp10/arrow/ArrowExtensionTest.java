@@ -411,7 +411,7 @@ public class ArrowExtensionTest {
       "100 NaN NaN 42 5.0 ADDVALUE\n" +
       "'d' STORE\n" +
       "\n" +
-      "NEWGTS 'e' RENAME { 'k' 'r' 'kk' 'vb' 'u' 'nn' 'm' 'mm' } RELABEL\n" +
+      "NEWGTS 'e' RENAME { 'k' 'r' 'u' 'nn' 'm' 'mm' } RELABEL\n" +
       "100 RAND RAND 42 5.0 ADDVALUE\n" +
       "300 RAND RAND 4242 5.3 ADDVALUE\n" +
       "'e' STORE\n";
@@ -455,8 +455,31 @@ public class ArrowExtensionTest {
     System.out.println(stack.dump(100));
   }
 
+  @Test
+  public void warpscriptTest_2() throws Exception {
 
+    MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
+    stack.maxLimits();
 
+    //
+    // Test that this warpscript exec without errors
+    //
 
+    String script = "[ @senx/dataset/temperature 0 2 SUBLIST\n" +
+      "bucketizer.mean 1508968800000000 1 h 4 ] BUCKETIZE\n" +
+      "'data' STORE\n" +
+      "[ $data 0 GET\n" +
+      "  $data 1 GET -3 SHRINK\n" +
+      "  $data 2 GET 0 SHRINK ]";
 
+    stack.execMulti(script);
+
+    WarpScriptStackFunction to = new TOARROW("to");
+    WarpScriptStackFunction from = new ARROWTO("from");
+
+    to.apply(stack);
+    from.apply(stack);
+
+    System.out.println(stack.dump(100));
+  }
 }
