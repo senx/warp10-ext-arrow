@@ -1,6 +1,8 @@
 ### NOTICE
 
-This extension is still in beta and some behaviour may change.
+We made a blog article to present this extension: https://blog.senx.io/conversions-to-apache-arrow-format/
+
+This extension is still in beta and subject to modifications.
 
 ### Arrow extension for WarpScript
 
