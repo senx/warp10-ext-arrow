@@ -156,7 +156,7 @@ jar {
   }
   from('.') {
     include 'README.md'
-    include 'io.warp10.ml-warp10-ext-arrow.conf'
+    include 'io.warp10-warp10-ext-arrow.conf'
   }
 }
 
@@ -179,7 +179,7 @@ shadowJar {
   }
   from('.') {
     include 'README.md'
-    include 'io.warp10.ml-warp10-ext-forecasting.conf'
+    include 'io.warp10-warp10-ext-arrow.conf'
   }
 
   dependencies {
