@@ -59,7 +59,7 @@ public class ArrowExtensionTest {
     StringBuilder props = new StringBuilder();
 
     props.append("warp.timeunits=us");
-    WarpConfig.setProperties(new StringReader(props.toString()));
+    WarpConfig.safeSetProperties(new StringReader(props.toString()));
     WarpScriptLib.register(new ArrowExtension());
   }
 
