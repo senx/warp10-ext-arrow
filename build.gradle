@@ -125,6 +125,8 @@ dependencies {
   compile 'org.apache.arrow:arrow-vector:0.14.1'
   compile 'io.netty:netty-buffer:4.1.27.Final'
   compile 'io.netty:netty-common:4.1.27.Final'
+  compile 'io.fastjson:boon:0.14'
+
 }
 
 test {
