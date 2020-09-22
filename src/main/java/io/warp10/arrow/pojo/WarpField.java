@@ -43,7 +43,7 @@ public abstract class WarpField {
     vector = getField().createVector(allocator);
   }
 
-  final protected FieldVector getVector() {
+  final public FieldVector getVector() {
     if (null == vector) {
       throw new RuntimeException("Field has not been initialized yet.");
     }
