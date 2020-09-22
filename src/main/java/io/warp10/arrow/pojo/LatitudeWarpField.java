@@ -59,4 +59,17 @@ public class LatitudeWarpField extends WarpField {
 
     ((Float4Vector)  getVector()).setSafe(index, ((Double) o).floatValue()); // actually cast it to single precision
   }
+
+  @Override
+  public Object get(int index) {
+    return getDouble(index);
+  }
+
+  public Double getDouble(int index) {
+    if (getVector().isNull(index)) {
+      return null;
+    }
+
+    return new Float(((Float4Vector)  getVector()).get(index)).doubleValue();
+  }
 }

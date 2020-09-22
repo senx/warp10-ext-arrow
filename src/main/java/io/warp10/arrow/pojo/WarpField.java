@@ -63,4 +63,12 @@ public abstract class WarpField {
     return new Field(key, new FieldType(false, type, null), null);
   }
 
+  public Object get(int index) {
+    if (getVector().isNull(index)) {
+      return null;
+    }
+
+    return getVector().getObject(index);
+  }
+
 }

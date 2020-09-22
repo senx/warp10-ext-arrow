@@ -541,8 +541,7 @@ public class WarpSchema {
   /**
    * Populate dataPointHolder with data from input GtsDecoder in order given by the schema.
    *
-   * @param index
-   * @param gts
+   * @param decoder
    */
   public void prepareGtsEncoderDataPoint(GTSDecoder decoder) throws WarpScriptException {
 

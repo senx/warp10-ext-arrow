@@ -16,6 +16,7 @@
 
 package io.warp10.arrow.pojo;
 
+import com.google.inject.internal.asm.$Type;
 import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BigIntVector;
@@ -27,6 +28,8 @@ import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.util.Text;
+
+import java.io.UnsupportedEncodingException;
 
 public class ValueWarpField extends WarpField {
 
@@ -219,5 +222,57 @@ public class ValueWarpField extends WarpField {
       default:
         throw new RuntimeException("Unrecognized type.");
     }
+  }
+
+  @Override
+  public Object get(int index) {
+
+    if (getVector().isNull(index)) {
+      return null;
+    }
+
+    switch (type) {
+      case LONG:
+        return ((BigIntVector)  getVector()).get(index);
+
+      case DOUBLE:
+        return ((Float8Vector)  getVector()).get(index);
+
+      case BOOLEAN:
+        return ((BitVector)  getVector()).get(index);
+
+      case STRING:
+        return ((VarCharVector)  getVector()).get(index);
+
+      case BYTES:
+        return ((VarBinaryVector)  getVector()).get(index);
+
+      default:
+        throw new RuntimeException("Unrecognized type.");
+    }
+  }
+
+  public Long getLong(int index) {
+    return (Long) get(index);
+  }
+
+  public Double getDouble(int index) {
+    return (Double) get(index);
+  }
+
+  public Boolean getBoolean(int index) {
+    return (Integer) get(index) == 1;
+  }
+
+  public String getString(int index) {
+    return new String((byte[]) get(index));
+  }
+
+  public String getString(int index, String encoding) throws UnsupportedEncodingException {
+    return new String((byte[]) get(index), encoding);
+  }
+
+  public byte[] getBytes(int index) {
+    return (byte[]) get(index);
   }
 }

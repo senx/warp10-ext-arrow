@@ -18,6 +18,7 @@ package io.warp10.arrow.pojo;
 
 import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.Float4Vector;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
@@ -58,5 +59,18 @@ public class LongitudeWarpField extends WarpField {
     }
 
     ((Float4Vector)  getVector()).setSafe(index, ((Double) o).floatValue()); // actually cast it to single precision
+  }
+
+  @Override
+  public Object get(int index) {
+    return getDouble(index);
+  }
+
+  public Double getDouble(int index) {
+    if (getVector().isNull(index)) {
+      return null;
+    }
+
+    return new Float(((Float4Vector)  getVector()).get(index)).doubleValue();
   }
 }

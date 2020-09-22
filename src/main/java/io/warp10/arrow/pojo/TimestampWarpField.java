@@ -58,4 +58,17 @@ public class TimestampWarpField extends WarpField {
 
     ((BigIntVector)  getVector()).setSafe(index, (long) o);
   }
+
+  @Override
+  public Object get(int index) {
+    return getLong(index);
+  }
+
+  public Long getLong(int index) {
+    if (getVector().isNull(index)) {
+      return null;
+    }
+
+    return ((BigIntVector)  getVector()).get(index);
+  }
 }
