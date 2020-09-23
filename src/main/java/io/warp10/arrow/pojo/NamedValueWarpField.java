@@ -5,6 +5,9 @@ import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.arrow.vector.types.pojo.FieldType;
+
+import java.util.Map;
 
 public class NamedValueWarpField extends ValueWarpField {
 
@@ -12,28 +15,38 @@ public class NamedValueWarpField extends ValueWarpField {
   private final Field field;
 
   public NamedValueWarpField(Type type, String name) {
+    this(type, name, null);
+  }
+
+  public NamedValueWarpField(Type type, String name, Map<String, String> metadata) {
     super(type);
     this.name = name;
+    ArrowType arrowType;
 
     switch (type) {
       case LONG:
-        field = Field.nullable(name,new ArrowType.Int(64, true));
+        arrowType = new ArrowType.Int(64, true);
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case DOUBLE:
-        field =  Field.nullable(name, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE));
+        arrowType = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case BOOLEAN:
-        field =  Field.nullable(name, new ArrowType.Bool());
+        arrowType = new ArrowType.Bool();
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case STRING:
-        field =  Field.nullable(name, new ArrowType.Utf8());
+        arrowType = new ArrowType.Utf8();
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case BYTES:
-        field =  Field.nullable(name, new ArrowType.Binary());
+        arrowType = new ArrowType.Binary();
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       default:
@@ -41,33 +54,43 @@ public class NamedValueWarpField extends ValueWarpField {
     }
   }
 
-  public NamedValueWarpField(GeoTimeSerie.TYPE type, String name) {
-    this(Type.valueOf(type.name()), name);
+  public NamedValueWarpField(GeoTimeSerie.TYPE type, String name, Map<String, String> metadata) {
+    this(Type.valueOf(type.name()), name, metadata);
   }
 
   public NamedValueWarpField(BufferAllocator allocator, Type type, String name) {
+    this(allocator, type, name, null);
+  }
+
+  public NamedValueWarpField(BufferAllocator allocator, Type type, String name, Map<String, String> metadata) {
     super(allocator, type);
     this.name = name;
+    ArrowType arrowType;
 
     switch (type) {
       case LONG:
-        field = Field.nullable(name,new ArrowType.Int(64, true));
+        arrowType = new ArrowType.Int(64, true);
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case DOUBLE:
-        field =  Field.nullable(name, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE));
+        arrowType = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case BOOLEAN:
-        field =  Field.nullable(name, new ArrowType.Bool());
+        arrowType = new ArrowType.Bool();
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case STRING:
-        field =  Field.nullable(name, new ArrowType.Utf8());
+        arrowType = new ArrowType.Utf8();
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       case BYTES:
-        field =  Field.nullable(name, new ArrowType.Binary());
+        arrowType = new ArrowType.Binary();
+        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
         break;
 
       default:
@@ -75,8 +98,8 @@ public class NamedValueWarpField extends ValueWarpField {
     }
   }
 
-  public NamedValueWarpField(BufferAllocator allocator, GeoTimeSerie.TYPE type, String name) {
-    this(allocator, Type.valueOf(type.name()), name);
+  public NamedValueWarpField(BufferAllocator allocator, GeoTimeSerie.TYPE type, String name, Map<String, String> metadata) {
+    this(allocator, Type.valueOf(type.name()), name, metadata);
   }
 
   @Override
