@@ -17,6 +17,7 @@
 package io.warp10.arrow.pojo;
 
 import com.google.inject.internal.asm.$Type;
+import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BigIntVector;
@@ -67,9 +68,17 @@ public class ValueWarpField extends WarpField {
     this.type = type;
   }
 
+  public ValueWarpField(GeoTimeSerie.TYPE type) {
+    this(Type.valueOf(type.name()));
+  }
+
   public ValueWarpField(BufferAllocator allocator, Type type) {
     super(allocator);
     this.type = type;
+  }
+
+  public ValueWarpField(BufferAllocator allocator, GeoTimeSerie.TYPE type) {
+    this(allocator, Type.valueOf(type.name()));
   }
 
   public String getKey() {
