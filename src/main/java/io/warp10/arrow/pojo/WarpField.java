@@ -55,6 +55,22 @@ public abstract class WarpField {
   public abstract String getWarpScriptType();
   public abstract void setSafe(int index, Object o);
 
+  public void setSafeUpdateValueCount(int index, Object o) {
+    setSafe(index, o);
+
+    if (getVector().getValueCount() <= index) {
+      getVector().setValueCount(index + 1);
+    }
+  }
+  
+  public void padWithNull(int lastIndex) {
+    setSafeUpdateValueCount(lastIndex, null);
+  }
+
+  public int getValueCount() {
+    return getVector().getValueCount();
+  }
+
   protected void clear() {
     getVector().clear();
   }
