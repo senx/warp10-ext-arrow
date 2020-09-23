@@ -62,13 +62,15 @@ public abstract class WarpField {
       getVector().setValueCount(index + 1);
     }
   }
-  
+
   public void addValue(Object o) {
     setSafeUpdateValueCount(getValueCount(), o);
   }
   
-  public void padWithNull(int lastIndex) {
-    setSafeUpdateValueCount(lastIndex, null);
+  public void padWithNull(int valueCount) {
+    if (valueCount > getValueCount()) {
+      setSafeUpdateValueCount(valueCount - 1, null);
+    }
   }
 
   public int getValueCount() {
