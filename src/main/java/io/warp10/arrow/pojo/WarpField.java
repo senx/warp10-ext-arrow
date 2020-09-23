@@ -63,6 +63,10 @@ public abstract class WarpField {
     }
   }
   
+  public void addValue(Object o) {
+    setSafeUpdateValueCount(getValueCount(), o);
+  }
+  
   public void padWithNull(int lastIndex) {
     setSafeUpdateValueCount(lastIndex, null);
   }
