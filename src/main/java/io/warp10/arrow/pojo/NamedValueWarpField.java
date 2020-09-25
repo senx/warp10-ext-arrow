@@ -63,39 +63,8 @@ public class NamedValueWarpField extends ValueWarpField {
   }
 
   public NamedValueWarpField(BufferAllocator allocator, Type type, String name, Map<String, String> metadata) {
-    super(allocator, type);
-    this.name = name;
-    ArrowType arrowType;
-
-    switch (type) {
-      case LONG:
-        arrowType = new ArrowType.Int(64, true);
-        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
-        break;
-
-      case DOUBLE:
-        arrowType = new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
-        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
-        break;
-
-      case BOOLEAN:
-        arrowType = new ArrowType.Bool();
-        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
-        break;
-
-      case STRING:
-        arrowType = new ArrowType.Utf8();
-        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
-        break;
-
-      case BYTES:
-        arrowType = new ArrowType.Binary();
-        field = new Field(name, new FieldType(true, arrowType, null, metadata),null);
-        break;
-
-      default:
-        throw new RuntimeException("Unrecognized type.");
-    }
+    this(type, name, metadata);
+    initialize(allocator);
   }
 
   public NamedValueWarpField(BufferAllocator allocator, GeoTimeSerie.TYPE type, String name, Map<String, String> metadata) {
