@@ -1,7 +1,9 @@
 package io.warp10.arrow.pojo;
 
 import io.warp10.continuum.gts.GeoTimeSerie;
+import io.warp10.script.WarpScriptException;
 import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -69,6 +71,35 @@ public class NamedValueWarpField extends ValueWarpField {
 
   public NamedValueWarpField(BufferAllocator allocator, GeoTimeSerie.TYPE type, String name, Map<String, String> metadata) {
     this(allocator, Type.valueOf(type.name()), name, metadata);
+  }
+
+  public static Type getCorrespondingType(FieldVector vector) throws WarpScriptException {
+    switch (vector.getMinorType().getType().getTypeID()) {
+      case Int:
+        return Type.LONG;
+
+      case FloatingPoint:
+        return Type.DOUBLE;
+
+      case Bool:
+        return Type.BOOLEAN;
+
+      case Utf8:
+        return Type.STRING;
+
+      case Binary:
+        return Type.BYTES;
+
+      default:
+        throw new WarpScriptException("Arrow type not supported yet");
+    }
+  }
+
+  public NamedValueWarpField(FieldVector vector) throws WarpScriptException {
+    super(getCorrespondingType(vector));
+    this.vector = vector;
+    this.field = vector.getField();
+    this.name = vector.getName();
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package io.warp10.arrow.pojo;
 
+import io.warp10.script.WarpScriptException;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.ArrowType;
@@ -27,7 +28,7 @@ import org.apache.arrow.vector.types.pojo.FieldType;
  */
 public abstract class WarpField {
 
-  private FieldVector vector;
+  protected FieldVector vector;
 
   public WarpField(){}
 
