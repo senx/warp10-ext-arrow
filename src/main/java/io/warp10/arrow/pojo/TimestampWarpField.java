@@ -16,21 +16,39 @@
 
 package io.warp10.arrow.pojo;
 
+import io.warp10.script.WarpScriptException;
 import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BigIntVector;
+import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 
 public class TimestampWarpField extends WarpField {
 
   public static final String TIMESTAMPS_KEY = "timestamp";
-  private final static Field TIMESTAMP_FIELD = Field.nullable(TIMESTAMPS_KEY,new ArrowType.Int(64, true));
+  private static final int bitWidth = 64;
+  private static final boolean isSigned = true;
+  private static final Field TIMESTAMP_FIELD = Field.nullable(TIMESTAMPS_KEY,new ArrowType.Int(bitWidth, isSigned));
 
   public TimestampWarpField(){}
 
   public TimestampWarpField(BufferAllocator allocator) {
     super(allocator);
+  }
+
+  public TimestampWarpField(FieldVector vector) throws WarpScriptException {
+    this.vector = vector;
+    Field field = vector.getField();
+    if (field.getFieldType().getType().getTypeID() != ArrowType.ArrowTypeID.Int) {
+      throw new WarpScriptException("Arrow type must be Int");
+    }
+    if (((ArrowType.Int) field.getFieldType().getType()).getBitWidth() != bitWidth) {
+      throw new WarpScriptException("Incompatible bit width");
+    }
+    if (((ArrowType.Int) field.getFieldType().getType()).getIsSigned() != isSigned) {
+      throw new WarpScriptException("Incompatible sign argument");
+    }
   }
 
   public String getKey() {
