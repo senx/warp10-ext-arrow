@@ -18,6 +18,7 @@ package io.warp10.arrow.pojo;
 
 import com.geoxp.GeoXPLib;
 import io.warp10.Revision;
+import io.warp10.arrow.ArrowExtension;
 import io.warp10.continuum.gts.GTSDecoder;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GTSHelper;
@@ -26,7 +27,6 @@ import io.warp10.continuum.store.Constants;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
@@ -83,7 +83,7 @@ public class WarpSchema {
 
     this.metadata = metadata;
     this.warpFields = warpFields;
-    allocator = new RootAllocator();
+    allocator = ArrowExtension.getRootAllocator();
     dictionaryProvider = new DictionaryProvider.MapDictionaryProvider();
 
     List<Field> fields = new ArrayList<Field>(warpFields.size());
