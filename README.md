@@ -1,9 +1,3 @@
-### NOTICE
-
-We made a blog article to present this extension: https://blog.senx.io/conversions-to-apache-arrow-format/
-
-This extension is still in beta and subject to modifications.
-
 ### Arrow extension for WarpScript
 
 WarpScript functions for conversions from and to Apache Arrow [columnar format](https://arrow.apache.org/docs/format/Columnar.html).
@@ -28,12 +22,22 @@ The arrow metadata will contain the fields *WarpScriptType*, *WarpScriptVersion*
 
 Empty columns are not encoded.
 
+#### From Arrow to WarpScript
+
 <pre>
 ARROW->    // Decode an Arrow stream (BYTES).
 </pre>
 
 The function will try to infer the type of the result using the value of the metadata *WarpScriptType*, based on the conversion table above.
 If the input has no value for the metadata *WarpScriptType*, it will use the default value PAIR.
+
+### NOTE
+
+Streaming Arrow format from memory or memory mapped files is not available yet. Contact us if you need this feature.
+SHM extension can be used as a workaround.
+
+We made a blog article to present this extension: https://blog.senx.io/conversions-to-apache-arrow-format/
+
 
 #### Build notes
 
