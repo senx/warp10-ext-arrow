@@ -54,7 +54,6 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
     args =  new ArgumentsBuilder()
       .addArgument(Object.class, IN, "See the README of the extension for supported types.")
-      .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
 
     output = new ArgumentsBuilder()
@@ -65,7 +64,6 @@ public class TOARROW extends FormattedWarpScriptFunction {
   @Override
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
     Object in = params.get(IN);
-    int nTicksPerBatch = ((Long) params.get(BATCH_SIZE)).intValue();
 
     if (in instanceof GeoTimeSerie) {
 
@@ -78,12 +76,8 @@ public class TOARROW extends FormattedWarpScriptFunction {
         throw new WarpScriptException("Input is empty.");
       }
 
-      if (0 == nTicksPerBatch) {
-        nTicksPerBatch = gts.size();
-      }
-
       ByteArrayOutputStream out =  new ByteArrayOutputStream();
-      ArrowVectorHelper.gtstoArrowStream(gts, nTicksPerBatch, out);
+      ArrowVectorHelper.gtsToArrowStream(gts, out);
       stack.push(out.toByteArray());
 
     } else if (in instanceof GTSEncoder) {
@@ -124,12 +118,8 @@ public class TOARROW extends FormattedWarpScriptFunction {
           }
         }
 
-        if (0 == nTicksPerBatch) {
-          nTicksPerBatch = commonSize;
-        }
-
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ArrowVectorHelper.columnsToArrowStream(list, nTicksPerBatch, out);
+        ArrowVectorHelper.columnsToArrowStream(list, commonSize, out);
         stack.push(out.toByteArray());
 
       } else {
@@ -137,10 +127,6 @@ public class TOARROW extends FormattedWarpScriptFunction {
         //
         // type ENCODERS: a list of GTSENCODERS (and/or GTS)
         //
-
-        if (0 != nTicksPerBatch) {
-          throw new WarpScriptException(BATCH_SIZE + " argument is unused for input of this type. It should not be set.");
-        }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         WarpSchema.GtsOrEncoderListSchema(list).writeListToStream(out, list);

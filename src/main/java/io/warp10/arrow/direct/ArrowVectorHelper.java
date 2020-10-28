@@ -279,7 +279,12 @@ public class ArrowVectorHelper {
   /**
    * Convert a GTS to an output stream in arrow format
    */
-  public static void gtstoArrowStream(GeoTimeSerie gts, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
+
+  public static void gtsToArrowStream(GeoTimeSerie gts, OutputStream out) throws WarpScriptException {
+    gtsToArrowStream(gts, gts.size(), out);
+  }
+
+  public static void gtsToArrowStream(GeoTimeSerie gts, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
 
     if (gts.size() == 0) {
       return;
