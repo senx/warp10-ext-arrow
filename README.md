@@ -6,38 +6,34 @@ This extension is still in beta and subject to modifications.
 
 ### Arrow extension for WarpScript
 
-WarpScript functions for conversions from and to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).
+WarpScript functions for conversions from and to Apache Arrow [columnar format](https://arrow.apache.org/docs/format/Columnar.html).
 
-Arrow format is tabular and is composed of a set of fields (i.e. named columns). It can also be associated with a map of metadata.
+
+#### From WarpScript to Arrow
 
 <pre>
-->ARROW    // Encode input into Arrow streaming format (BYTES).
+->ARROW    // Encode input into Arrow columnar format (BYTES).
 </pre>
 
-Input:
- * a LIST containing either GTS or GTSENCODER instances.
+The supported input types are described in the conversion table below.
+The output is a BYTES representation of an Arrow table, containing a map of metadata and columns.
+The arrow metadata will contain the fields *WarpScriptType*, *WarpScriptVersion* and *WarpScriptTimeUnitsPerSecond*.
 
-The output has at least a `classname` field, and a field per existing GTS label key and attribute. Then, depending if they would not be empty it can have a `timestamp` field, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.
+| Input description | Output description | Metadata description | WarpScriptType value |
+|-------------------|--------------------|----------------------|----------------------|
+| List of GTS encoders or GTS | one column for classname, one per label key, one for tick, one for latitude, one for longitude, one for elevation, one per value type | no additional output metadata | ENCODERS |
+| A GTS | one column for tick, one for latitude, one for longitude, one for elevation, one for value | the value column is named with GTS classname and has GTS label metadata | GTS |
+| A pair list containing a map of metadata and a map of list | one column per list | the input map of metadata is the output metadata | PAIR |
+| A WarpFrame (if using WarpFrame extension) | one column for tick, one column per GTS | each column is named with GTS classname and has GTS label metadata | WARPFRAME |
 
-The classnames and labels are repeated on each row with data from the same input GTS (but they are dictionary-encoded so it is memory efficient).
-
-Data points from different input GTS or GTSENCODER that are of the same type are in the same column. They can be identified by the `classname` and label related fields.
-
-Other supported input:
- * a GTS,
- * a GTSENCODER,
- * a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).
-
-If the input is a single GTS or a single GTSENCODER, there is no field for the classname, the labels and the attributes, but they can be found in the Arrow metadata.
+Empty columns are not encoded.
 
 <pre>
 ARROW->    // Decode an Arrow stream (BYTES).
 </pre>
 
-Suported output is decided by the value of the metadata *WarpScriptType*:
- * *GTS*: a GTS,
- * *GTSENCODER*: a GTSENCODER,
- * *LIST* (default): a LIST of two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).
+The function will try to infer the type of the result using the value of the metadata *WarpScriptType*, based on the conversion table above.
+If the input has no value for the metadata *WarpScriptType*, it will use the default value PAIR.
 
 #### Build notes
 
