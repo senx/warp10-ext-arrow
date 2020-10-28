@@ -1,4 +1,5 @@
-// Copyright 2019 SenX
+//
+// Copyright 2020 SenX
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +26,7 @@ import java.nio.channels.Channels;
 import java.util.Map;
 
 /**
- * Decode an Arrow stream
+ * Decode an Arrow byte array representation
  */
 public class ARROWTO extends FormattedWarpScriptFunction {
 
@@ -46,8 +47,8 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public ARROWTO(String name) {
     super(name);
 
-    getDocstring().append("Decode an Arrow stream. If its schema metadata has the field WarpScriptType, then this function pushes onto the stack an object of that type (GTS or GTSENCODER)." +
-      " Otherwise, it pushes a list of two items: the custom metadata (a MAP), and the field vectors (a MAP of LIST).");
+    getDocstring().append("Decode an Arrow stream (BYTES). The function will try to infer the type of the result using the value of the metadata *WarpScriptType*, based on the conversion table that you can find on the extension's README.\n" +
+      "If the input has no value for the metadata *WarpScriptType*, it will use the default value PAIR.");
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
@@ -55,7 +56,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
       .build();
 
     output = new ArgumentsBuilder()
-      .addArgument(Object.class, RESULT, "The decoded object. GTS, GTSENCODER or pair LIST of metadata (a LIST) and vector fields (a MAP of LIST).")
+      .addArgument(Object.class, RESULT, "The decoded object.")
       .build();
 
   }

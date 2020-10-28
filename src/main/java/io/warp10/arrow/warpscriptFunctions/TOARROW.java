@@ -1,5 +1,5 @@
 //
-//   Copyright 2019  SenX S.A.S.
+//   Copyright 2020  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,17 +50,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
   public TOARROW(String name) {
     super(name);
 
-    getDocstring().append("Conversion to Apache Arrow [streaming format](https://arrow.apache.org/docs/ipc.html).\n" +
-      "\n" +
-      "Arrow format is tabular and is composed of a set of fields (i.e. named columns). It can also be associated with a map of metadata.\n" +
-      "The principle input type is a LIST containing GTS or GTSENCODER.\n" +
-      "The output has at least a `classname` field, and a field per existing GTS label key and attribute. Then, depending if they would not be empty it can have a `timestamp` field, a `latitude` field, a `longitude` field, an `elevation` field, and one field per value type: `LONG`, `DOUBLE`, `BOOLEAN`, `STRING`, `BYTES`.\n" +
-      "\n" +
-      "The classnames and labels are repeated on each row with data from the same input GTS (but they are dictionary-encoded so it is memory efficient).\n" +
-      "Note that data points from different input GTS or GTSENCODER that are of the same type are in the same column. They can be identified by the `classname` and label related fields.");
+    getDocstring().append("Encode input into Arrow columnar format (BYTES). The conversion table is in the extension's README.");
 
     args =  new ArgumentsBuilder()
-      .addArgument(Object.class, IN, "A LIST containing GTS or GTSENCODER instances. For other supported types, see the README of the warp10-ext-arrow extension.")
+      .addArgument(Object.class, IN, "See the README of the extension for supported types.")
       .addOptionalArgument(Long.class, BATCH_SIZE, "The number of data point per batch. Default to full size.", 0L)
       .build();
 
