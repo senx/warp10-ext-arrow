@@ -69,6 +69,10 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
     if (in instanceof GeoTimeSerie) {
 
+      //
+      // type GTS
+      //
+
       GeoTimeSerie gts = (GeoTimeSerie) in;
       if (0 == gts.size()) {
         throw new WarpScriptException("Input is empty.");
@@ -84,18 +88,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
 
     } else if (in instanceof GTSEncoder) {
 
-      GTSEncoder encoder = (GTSEncoder) in;
-      if (0 == encoder.getCount()) {
-        throw new WarpScriptException("Input is empty.");
-      }
-
-      if (0 == nTicksPerBatch) {
-        nTicksPerBatch = (int) encoder.getCount();
-      }
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ArrowVectorHelper.gtsEncodertoArrowStream(encoder, nTicksPerBatch, out);
-      stack.push(out.toByteArray());
+      throw new WarpScriptException("GTSENCODER input type is not supported anymore since 2.0.0. Use instead a list of GTSENCODER.");
 
     } else if (in instanceof List) {
 
@@ -107,11 +100,11 @@ public class TOARROW extends FormattedWarpScriptFunction {
       if (list.get(0) instanceof Map) {
 
         //
-        // The most generic behaviour
+        // type PAIR: list containing map of metadata and map of list
         //
 
         if (2 != list.size() || !(list.get(0) instanceof Map) || !(list.get(1) instanceof Map)) {
-          throw new WarpScriptException("When " + getName() + "'s input is a pair LIST of Map, it expects two items: custom metadata (a MAP), and field vectors (a MAP of LIST of same size).");
+          throw new WarpScriptException("When " + getName() + "'s input is a pair LIST of Map, it expects two items: custom metadata (a MAP), and columns (a MAP of LIST of same size).");
         }
 
         Map<String, List> columns = (Map<String, List>) list.get(1);
@@ -126,7 +119,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
             commonSize = columns.get(key).size();
           } else {
             if (commonSize != columns.get(key).size()) {
-              throw new WarpScriptException(getName() + ": incoherent field vector size. They must be equal.");
+              throw new WarpScriptException(getName() + ": incoherent column sizes. They must be equal.");
             }
           }
         }
@@ -142,7 +135,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
       } else {
 
         //
-        // This is the main behaviour
+        // type ENCODERS: a list of GTSENCODERS (and/or GTS)
         //
 
         if (0 != nTicksPerBatch) {
