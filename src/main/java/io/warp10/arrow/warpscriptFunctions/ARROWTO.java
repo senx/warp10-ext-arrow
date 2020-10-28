@@ -16,7 +16,7 @@
 
 package io.warp10.arrow.warpscriptFunctions;
 
-import io.warp10.arrow.direct.ArrowVectorHelper;
+import io.warp10.arrow.direct.ArrowReaders;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
@@ -65,7 +65,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
     byte[] in = (byte[]) params.get(BYTES);
     boolean mapList = Boolean.TRUE.equals(params.get(DEFAULT));
-    stack.push(ArrowVectorHelper.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList));
+    stack.push(ArrowReaders.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList));
 
     return stack;
   }
