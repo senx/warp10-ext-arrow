@@ -209,11 +209,11 @@ public class ArrowWriters {
 
   public static void gtsToArrowStream(GeoTimeSerie gts, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
 
+    VectorSchemaRoot root = VectorSchemaRoot.create(createGtsSchema(gts), new RootAllocator(Integer.MAX_VALUE));
+
     if (gts.size() == 0) {
       return;
     }
-
-    VectorSchemaRoot root = VectorSchemaRoot.create(createGtsSchema(gts), new RootAllocator(Integer.MAX_VALUE));
 
     //
     // Feed data to root

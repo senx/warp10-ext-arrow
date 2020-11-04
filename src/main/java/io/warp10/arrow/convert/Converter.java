@@ -16,6 +16,8 @@
 
 package io.warp10.arrow.convert;
 
+import io.warp10.script.WarpScriptException;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -25,9 +27,9 @@ public interface Converter<T> {
 
     boolean isConvertible(Object o);
 
-    void write(T object, OutputStream out);
+    void write(T object, OutputStream out) throws WarpScriptException;
 
-    T read(InputStream in);
+    T read(InputStream in) throws WarpScriptException;
 
     /**
      * Used if need to choose between converters of same type T.

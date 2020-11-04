@@ -16,7 +16,10 @@
 
 package io.warp10.arrow.convert;
 
+import io.warp10.arrow.direct.ArrowWriters;
+import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
+import io.warp10.script.WarpScriptException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,6 +45,10 @@ public class Register {
         return REGISTER.containsKey(type);
     }
 
+    //
+    // Base converters
+    //
+
     static {
 
         //
@@ -56,8 +63,7 @@ public class Register {
 
             @Override
             public boolean isConvertible(Object o) {
-                //TODO
-                return false;
+                return o instanceof GTSEncoder;
             }
 
             @Override
@@ -84,17 +90,16 @@ public class Register {
 
             @Override
             public boolean isConvertible(Object o) {
-                //TODO
-                return false;
+                return o instanceof GeoTimeSerie;
             }
 
             @Override
-            public void write(GeoTimeSerie gts, OutputStream out) {
-                //TODO
+            public void write(GeoTimeSerie gts, OutputStream out) throws WarpScriptException {
+                ArrowWriters.gtsToArrowStream(gts, out);
             }
 
             @Override
-            public GeoTimeSerie read(InputStream in) {
+            public GeoTimeSerie read(InputStream in) throws WarpScriptException {
                 //TODO
                 return null;
             }
