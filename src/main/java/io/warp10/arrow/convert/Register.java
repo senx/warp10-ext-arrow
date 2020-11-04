@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Register {
 
@@ -36,6 +37,10 @@ public class Register {
         if (!REGISTER.containsKey(converter.getWarpScriptType()) || converter.getPriorityLevel() <= REGISTER.get(converter.getWarpScriptType()).getPriorityLevel()) {
             REGISTER.put(converter.getWarpScriptType(), converter);
         }
+    }
+
+    public static Set<String> getRecognizedTypes() {
+        return REGISTER.keySet();
     }
 
     public static Converter getConverter(String type) {

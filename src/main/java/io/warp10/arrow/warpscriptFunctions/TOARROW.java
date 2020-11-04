@@ -16,6 +16,7 @@
 
 package io.warp10.arrow.warpscriptFunctions;
 
+import io.warp10.arrow.convert.Register;
 import io.warp10.arrow.direct.ArrowWriters;
 import io.warp10.arrow.pojo.WarpSchema;
 import io.warp10.continuum.gts.GTSEncoder;
@@ -63,79 +64,21 @@ public class TOARROW extends FormattedWarpScriptFunction {
   @Override
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
     Object in = params.get(IN);
-
-    if (in instanceof GeoTimeSerie) {
-
-      //
-      // type GTS
-      //
-
-      GeoTimeSerie gts = (GeoTimeSerie) in;
-      if (0 == gts.size()) {
-        throw new WarpScriptException("Input is empty.");
+    ByteArrayOutputStream out =  new ByteArrayOutputStream();
+    boolean found = false;
+    for (String type: Register.getRecognizedTypes()) {
+      if (Register.getConverter(type).isConvertible(in)) {
+        Register.getConverter(type).write(in, out);
+        found = true;
+        break;
       }
-
-      ByteArrayOutputStream out =  new ByteArrayOutputStream();
-      ArrowWriters.gtsToArrowStream(gts, out);
-      stack.push(out.toByteArray());
-
-    } else if (in instanceof GTSEncoder) {
-
-      throw new WarpScriptException("GTSENCODER input type is not supported anymore since 2.0.0. Use instead a list of GTSENCODER.");
-
-    } else if (in instanceof List) {
-
-      List list = (List) in;
-      if (0 == list.size()) {
-        throw new WarpScriptException(getName() + " received an empty list.");
-      }
-
-      if (list.get(0) instanceof Map) {
-
-        //
-        // type PAIR: list containing map of metadata and map of list
-        //
-
-        if (2 != list.size() || !(list.get(0) instanceof Map) || !(list.get(1) instanceof Map)) {
-          throw new WarpScriptException("When " + getName() + "'s input is a pair LIST of Map, it expects two items: custom metadata (a MAP), and columns (a MAP of LIST of same size).");
-        }
-
-        Map<String, List> columns = (Map<String, List>) list.get(1);
-
-        Integer commonSize = null;
-        for (String key : columns.keySet()) {
-          if (0 == columns.get(key).size()) {
-            continue;
-          }
-
-          if (null == commonSize) {
-            commonSize = columns.get(key).size();
-          } else {
-            if (commonSize != columns.get(key).size()) {
-              throw new WarpScriptException(getName() + ": incoherent column sizes. They must be equal.");
-            }
-          }
-        }
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ArrowWriters.columnsToArrowStream(list, commonSize, out);
-        stack.push(out.toByteArray());
-
-      } else {
-
-        //
-        // type ENCODERS: a list of GTSENCODERS (and/or GTS)
-        //
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        WarpSchema.GtsOrEncoderListSchema(list).writeListToStream(out, list);
-        stack.push(out.toByteArray());
-      }
-
-    } else {
-
-      throw  new WarpScriptException(getName() + ": unsupported input type.");
     }
+
+    if (!found) {
+      throw new WarpScriptException("Input is not convertible to Arrow columnar format.");
+    }
+
+    stack.push(out.toByteArray());
 
     return stack;
   }
