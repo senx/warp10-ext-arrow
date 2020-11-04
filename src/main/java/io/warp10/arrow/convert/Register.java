@@ -17,6 +17,7 @@
 package io.warp10.arrow.convert;
 
 import io.warp10.arrow.direct.ArrowWriters;
+import io.warp10.arrow.pojo.WarpSchema;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
@@ -63,12 +64,22 @@ public class Register {
 
             @Override
             public boolean isConvertible(Object o) {
-                return o instanceof GTSEncoder;
+                if (!(o instanceof List)) {
+                    return false;
+                }
+
+                for (Object oo: (List) o) {
+                    if (!(oo instanceof GeoTimeSerie) && !(oo instanceof GTSEncoder)) {
+                        return false;
+                    }
+                }
+
+                return true;
             }
 
             @Override
-            public void write(List object, OutputStream out) {
-                //TODO
+            public void write(List list, OutputStream out) throws WarpScriptException {
+                WarpSchema.GtsOrEncoderListSchema(list).writeListToStream(out, list);
             }
 
             @Override
@@ -117,13 +128,40 @@ public class Register {
 
             @Override
             public boolean isConvertible(Object o) {
-                //TODO
-                return false;
+                if (!(o instanceof List)) {
+                    return false;
+
+                }
+
+                List list = (List) o;
+                if (2 != list.size() || !(list.get(0) instanceof Map) || !(list.get(1) instanceof Map)) {
+                    return false;
+                }
+
+                return true;
             }
 
             @Override
-            public void write(List object, OutputStream out) {
-                //TODO
+            public void write(List list, OutputStream out) throws WarpScriptException {
+
+                Map<String, List> columns = (Map<String, List>) list.get(1);
+
+                Integer commonSize = null;
+                for (String key : columns.keySet()) {
+                    if (0 == columns.get(key).size()) {
+                        continue;
+                    }
+
+                    if (null == commonSize) {
+                        commonSize = columns.get(key).size();
+                    } else {
+                        if (commonSize != columns.get(key).size()) {
+                            throw new WarpScriptException("Incoherent list sizes in PAIR type input. They must be equal.");
+                        }
+                    }
+                }
+
+                ArrowWriters.columnsToArrowStream(list, commonSize, out);
             }
 
             @Override
