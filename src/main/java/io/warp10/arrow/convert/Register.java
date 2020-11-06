@@ -95,7 +95,7 @@ public class Register {
 
             @Override
             public List read(ArrowReader reader) throws WarpScriptException {
-                throw new WarpScriptException("Decoding not yet implemented for conversion mode " + getWarpScriptConversionMode());
+                throw new WarpScriptException("Decoding not yet implemented for conversion mode " + getWarpScriptConversionMode() + ". Please contact us if you need this feature implemented.");
             }
         });
 
