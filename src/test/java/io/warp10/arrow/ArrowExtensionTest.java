@@ -71,7 +71,8 @@ public class ArrowExtensionTest {
     MemoryWarpScriptStack stack = new MemoryWarpScriptStack(null, null);
     stack.maxLimits();
 
-    stack.exec("[ @senx/dataset/temperature bucketizer.mean 0 1 w 0 ] BUCKETIZE ->ARROW ARROW->");
+    stack.exec("[ @senx/dataset/temperature bucketizer.mean 0 1 w 0 ] BUCKETIZE ->ARROW");
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     //System.out.println(stack.dump(100));
     stack.drop();
   }
@@ -265,6 +266,7 @@ public class ArrowExtensionTest {
 
     stack.push(list);
     stack.exec(ArrowExtension.TOARROW);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     stack.exec(ArrowExtension.ARROWTO);
     List res = (List) stack.pop();
     Map<String, String> metadata =  (Map<String, String>) res.get(0);
@@ -324,10 +326,11 @@ public class ArrowExtensionTest {
       "'b' STORE\n" +
       "\n" +
       "$a ->ARROW ARROW->\n" +
-      "[ $a ] ->ARROW ARROW->\n" +
+      "[ $a ] ->ARROW 'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' } ARROW->\n" +
       "[ $a $b ] ->ARROW";
 
     stack.execMulti(script);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
 
     // isolate bug for better stack trace
     WarpScriptStackFunction from = new ARROWTO("from");
@@ -373,32 +376,38 @@ public class ArrowExtensionTest {
     list.add(stack.load("a"));
     stack.push(list);
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     list.add(stack.load("b"));
     stack.push(list);
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     list.add(stack.load("c"));
     stack.push(list);
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     list.add(stack.load("d"));
     stack.push(list);
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     list.add(stack.load("e"));
     stack.push(list);
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     WarpScriptStackFunction asEnc = new ASENCODERS("asEnc");
     stack.push(list);
     asEnc.apply(stack);
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     System.out.println(stack.dump(100));
@@ -427,6 +436,7 @@ public class ArrowExtensionTest {
     WarpScriptStackFunction from = new ARROWTO("from");
 
     to.apply(stack);
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     from.apply(stack);
 
     System.out.println(stack.dump(100));

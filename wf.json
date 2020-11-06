@@ -2,7 +2,7 @@
   "type": "ext",
   "group": "io.warp10",
   "artifact": "warp10-ext-arrow",
-  "version": "1.0.1",
+  "version": "2.0.1",
   "description": "Conversions to and from Apache Arrow streaming format",
   "author": "Jean-Charles Vialatte",
   "email": "jean-charles.vialatte@senx.io",
