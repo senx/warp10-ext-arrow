@@ -5,15 +5,15 @@
 'deleted' '' 
 'version' 'all' 
 'tags' [ 'arrow' ] 
-'desc' 'Decode an Arrow stream. If its schema metadata has the field WarpScriptType, then this function pushes onto the stack an object of that type (GTS or GTSENCODER). Otherwise, it pushes a list of two items: the custom metadata (a MAP), and the field vectors (a MAP of LIST).' 
-'sig' [ [ [ 'bytes:BYTES' ] [ 'result:OBJECT' ] ] [ [ {
-'default' 'default:BOOLEAN' 
+'desc' 'Decode an Arrow stream (BYTES). The type of the result depends on the value of *WarpScriptConversionMode* (see the table in the extension%27s README). If the input%27s metadata has no value for *WarpScriptConversionMode*, the PAIR conversion mode will be used. %0aIf the input has no value for the metadata *WarpScriptType*, it will use the default value PAIR.' 
+'sig' [ [ [ 'bytes:BYTES' ] [ 'result:X-java.lang.Object' ] ] [ [ {
+'WarpScriptConversionMode' 'WarpScriptConversionMode:STRING' 
 'bytes' 'bytes:BYTES' 
-} ] [ 'result:OBJECT' ] ] ] 
+} ] [ 'result:X-java.lang.Object' ] ] ] 
 'params' {
-'default' 'Force output type to be a pair LIST of metadata and vector fields (ignore WarpScriptType). Default to false.' 
+'WarpScriptConversionMode' 'WarpScriptConversionMode to use. If set, this value takes precedence for the choice of the conversion mode.' 
 'bytes' 'Arrow stream to be decoded.' 
-'result' 'The decoded object. GTS, GTSENCODER or pair LIST of metadata (a LIST) and vector fields (a MAP of LIST).' 
+'result' 'The decoded object.' 
 } 
 'related' [ 'ARROWTO' 'TOARROW' ] 
 'examples' [ ] 

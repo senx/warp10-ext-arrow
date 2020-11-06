@@ -37,7 +37,7 @@ public class GenerateDocumentation extends RunAndGenerateDocumentationWithUnitTe
   }
 
   protected String OUTPUT_FOLDER() {
-    return "/home/jc/Projects/2019/warp10-ext-arrow/src/main/warpscript/io.warp10/warp10-ext-arrow/";
+    return "/home/jenx/Projects/senx/warp10-ext-arrow/src/main/warpscript/io.warp10/warp10-ext-arrow/";
   }
 
   protected boolean OVERWRITE() {
