@@ -11,9 +11,9 @@ WarpScript functions for conversions from and to Apache Arrow [columnar format](
 
 The supported input types are described in the conversion table below.
 The output is a BYTES representation of an Arrow table, containing a map of metadata and columns.
-The arrow metadata will contain the fields *WarpScriptType*, *WarpScriptVersion* and *WarpScriptTimeUnitsPerSecond*.
+The arrow metadata will contain the fields *WarpScriptConversionMode*, *WarpScriptVersion* and *WarpScriptTimeUnitsPerSecond*.
 
-| Input description | Output description | Metadata description | WarpScriptType value |
+| Input description | Output description | Metadata description | WarpScriptConversionMode |
 |-------------------|--------------------|----------------------|----------------------|
 | List of GTS encoders or GTS | one column for classname, one per label key, one for timestamp, one for latitude, one for longitude, one for elevation, one per value type | no additional output metadata | ENCODERS |
 | A GTS | one column for timestamp, one for latitude, one for longitude, one for elevation, one for value | output metadata includes full GTS metadata | GTS |
@@ -28,8 +28,8 @@ Empty columns are not encoded.
 ARROW->    // Decode an Arrow stream (BYTES).
 </pre>
 
-The function will try to infer the type of the result using the value of the metadata *WarpScriptType*, based on the conversion table above.
-If the input has no value for the metadata *WarpScriptType*, it will use the default value PAIR.
+The function will try to infer the type of the result using the value of the metadata *WarpScriptConversionMode*, based on the conversion table above.
+If the input has no *WarpScriptConversionMode*, it will use the default WarpScriptConversionMode PAIR.
 
 ### NOTE
 

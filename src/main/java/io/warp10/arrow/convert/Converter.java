@@ -23,7 +23,7 @@ import java.io.OutputStream;
 
 public interface Converter<T> {
 
-    String getWarpScriptType();
+    String getWarpScriptConversionMode();
 
     boolean isConvertible(Object o);
 
@@ -32,7 +32,7 @@ public interface Converter<T> {
     T read(InputStream in) throws WarpScriptException;
 
     /**
-     * Used if need to choose between converters of same type T.
+     * Used if need to choose between converters of same conversion mode.
      * @return the level
      */
     default int getPriorityLevel(){

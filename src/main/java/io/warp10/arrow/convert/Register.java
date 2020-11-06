@@ -34,12 +34,12 @@ public class Register {
     private final static Map<String, Converter> REGISTER = new HashMap<String, Converter>();
 
     public static void addConverter(Converter converter){
-        if (!REGISTER.containsKey(converter.getWarpScriptType()) || converter.getPriorityLevel() <= REGISTER.get(converter.getWarpScriptType()).getPriorityLevel()) {
-            REGISTER.put(converter.getWarpScriptType(), converter);
+        if (!REGISTER.containsKey(converter.getWarpScriptConversionMode()) || converter.getPriorityLevel() <= REGISTER.get(converter.getWarpScriptConversionMode()).getPriorityLevel()) {
+            REGISTER.put(converter.getWarpScriptConversionMode(), converter);
         }
     }
 
-    public static Set<String> getRecognizedTypes() {
+    public static Set<String> getKnownConversionModes() {
         return REGISTER.keySet();
     }
 
@@ -63,7 +63,7 @@ public class Register {
 
         addConverter(new Converter<List>() {
             @Override
-            public String getWarpScriptType() {
+            public String getWarpScriptConversionMode() {
                 return "ENCODERS";
             }
 
@@ -100,7 +100,7 @@ public class Register {
 
         addConverter(new Converter<GeoTimeSerie>() {
             @Override
-            public String getWarpScriptType() {
+            public String getWarpScriptConversionMode() {
                 return "GTS";
             }
 
@@ -127,7 +127,7 @@ public class Register {
 
         addConverter(new Converter<List>() {
             @Override
-            public String getWarpScriptType() {
+            public String getWarpScriptConversionMode() {
                 return "PAIR";
             }
 
@@ -161,7 +161,7 @@ public class Register {
                         commonSize = columns.get(key).size();
                     } else {
                         if (commonSize != columns.get(key).size()) {
-                            throw new WarpScriptException("Incoherent list sizes in PAIR type input. They must be equal.");
+                            throw new WarpScriptException("Incoherent list sizes for PAIR conversion mode. They must be equal.");
                         }
                     }
                 }

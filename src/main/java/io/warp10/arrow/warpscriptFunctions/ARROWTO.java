@@ -32,7 +32,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
   private final Arguments args;
   private static final String BYTES = "bytes";
-  private static final String DEFAULT = "default";
+  private static final String MODE = "WarpScriptConversionMode";
 
   private final Arguments output;
   private static final String RESULT = "result";
@@ -47,12 +47,12 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public ARROWTO(String name) {
     super(name);
 
-    getDocstring().append("Decode an Arrow stream (BYTES). The function will try to infer the type of the result using the value of the metadata *WarpScriptType*, based on the conversion table that you can find on the extension's README.\n" +
+    getDocstring().append("Decode an Arrow stream (BYTES). The type of the result depends on the value of *WarpScriptConversionMode* (see the table in the extension's README). If the input's metadata has no value for *WarpScriptConversionMode*, the PAIR conversion mode will be used. \n" +
       "If the input has no value for the metadata *WarpScriptType*, it will use the default value PAIR.");
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
-      .addOptionalArgument(Boolean.class, DEFAULT, "Force output type to be a pair LIST of metadata and vector fields (ignore WarpScriptType). Default to false.", false)
+      .addOptionalArgument(String.class, MODE, "WarpScriptConversionMode to use. If set, this value takes precedence for the choice of the conversion mode.", null)
       .build();
 
     output = new ArgumentsBuilder()
@@ -64,7 +64,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
 
     byte[] in = (byte[]) params.get(BYTES);
-    boolean mapList = Boolean.TRUE.equals(params.get(DEFAULT));
+    boolean mapList = Boolean.TRUE.equals(params.get(MODE));
     stack.push(ArrowReaders.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList));
 
     return stack;

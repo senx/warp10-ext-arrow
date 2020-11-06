@@ -17,16 +17,11 @@
 package io.warp10.arrow.warpscriptFunctions;
 
 import io.warp10.arrow.convert.Register;
-import io.warp10.arrow.direct.ArrowWriters;
-import io.warp10.arrow.pojo.WarpSchema;
-import io.warp10.continuum.gts.GTSEncoder;
-import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,7 +61,7 @@ public class TOARROW extends FormattedWarpScriptFunction {
     Object in = params.get(IN);
     ByteArrayOutputStream out =  new ByteArrayOutputStream();
     boolean found = false;
-    for (String type: Register.getRecognizedTypes()) {
+    for (String type: Register.getKnownConversionModes()) {
       if (Register.getConverter(type).isConvertible(in)) {
         Register.getConverter(type).write(in, out);
         found = true;
