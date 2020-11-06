@@ -18,6 +18,7 @@ package io.warp10.arrow.direct;
 
 import com.geoxp.GeoXPLib;
 import io.warp10.Revision;
+import io.warp10.arrow.convert.Register;
 import io.warp10.continuum.gts.GTSDecoder;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GTSHelper;
@@ -74,7 +75,7 @@ import static io.warp10.arrow.direct.ArrowHelper.STRING_VALUES_KEY;
 import static io.warp10.arrow.direct.ArrowHelper.STU;
 import static io.warp10.arrow.direct.ArrowHelper.TIMESTAMPS_KEY;
 import static io.warp10.arrow.direct.ArrowHelper.TIMESTAMP_FIELD;
-import static io.warp10.arrow.direct.ArrowHelper.TYPE;
+import static io.warp10.arrow.direct.ArrowHelper.MODE;
 
 public class ArrowWriters {
 
@@ -146,7 +147,7 @@ public class ArrowWriters {
     //
 
     Map<String, String> metadata = extractGtsMetadata(gts.getMetadata());
-    metadata.put(TYPE, TYPEOF.typeof(gts));
+    metadata.put(MODE, Register.GTS);
     metadata.put(REV, Revision.REVISION);
     metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 
@@ -302,7 +303,7 @@ public class ArrowWriters {
       metadata = new HashMap<String, String>();
     }
 
-    metadata.put(TYPE, TYPEOF.typeof(encoder));
+    metadata.put(MODE, TYPEOF.typeof(encoder));
     metadata.put(REV, Revision.REVISION);
     metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 
@@ -422,7 +423,7 @@ public class ArrowWriters {
   public static void columnsToArrowStream(List input, int nTicksPerBatch, OutputStream out) throws WarpScriptException {
 
     Map<String, String> customMetadata = new HashMap<String, String>((Map<String, String>) input.get(0));
-    customMetadata.put(TYPE, TYPEOF.typeof(input));
+    customMetadata.put(MODE, Register.PAIR);
     customMetadata.put(REV, Revision.REVISION);
     customMetadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 

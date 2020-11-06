@@ -16,13 +16,16 @@
 
 package io.warp10.arrow.warpscriptFunctions;
 
-import io.warp10.arrow.direct.ArrowReaders;
+import io.warp10.arrow.convert.Register;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.formatted.FormattedWarpScriptFunction;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.ipc.ArrowStreamReader;
 
 import java.io.ByteArrayInputStream;
-import java.nio.channels.Channels;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -31,8 +34,8 @@ import java.util.Map;
 public class ARROWTO extends FormattedWarpScriptFunction {
 
   private final Arguments args;
-  private static final String BYTES = "bytes";
-  private static final String MODE = "WarpScriptConversionMode";
+  public static final String BYTES = "bytes";
+  public static final String MODE = "WarpScriptConversionMode";
 
   private final Arguments output;
   private static final String RESULT = "result";
@@ -52,7 +55,7 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
     args = new ArgumentsBuilder()
       .addArgument(byte[].class, BYTES, "Arrow stream to be decoded." )
-      .addOptionalArgument(String.class, MODE, "WarpScriptConversionMode to use. If set, this value takes precedence for the choice of the conversion mode.", null)
+      .addOptionalArgument(String.class, MODE, "WarpScriptConversionMode to use. If set, this value takes precedence for the choice of the conversion mode.", "")
       .build();
 
     output = new ArgumentsBuilder()
@@ -63,9 +66,37 @@ public class ARROWTO extends FormattedWarpScriptFunction {
 
   public WarpScriptStack apply(Map<String, Object> params, WarpScriptStack stack) throws WarpScriptException {
 
-    byte[] in = (byte[]) params.get(BYTES);
-    boolean mapList = Boolean.TRUE.equals(params.get(MODE));
-    stack.push(ArrowReaders.fromArrowStream(Channels.newChannel(new ByteArrayInputStream(in)), mapList));
+    InputStream in = new ByteArrayInputStream((byte[]) params.get(BYTES));
+
+    Object res = null;
+
+    try (ArrowStreamReader reader = new ArrowStreamReader(in, new RootAllocator(Integer.MAX_VALUE))) {
+
+      Map<String, String> metadata = reader.getVectorSchemaRoot().getSchema().getCustomMetadata();
+
+      String conversionMode = Register.PAIR; // PAIR is default mode
+      if ("" != params.get(MODE)) {
+        conversionMode = (String) params.get(MODE);
+
+      } else {
+        String inputMode = metadata.get(MODE);
+
+        if (null != inputMode) {
+          conversionMode = inputMode;
+        }
+      }
+
+      if (!Register.isSupportedMode(conversionMode)) {
+        throw new WarpScriptException("WarpScriptConversionMode " + conversionMode + " is not supported.");
+      }
+
+      res = Register.getConverter(conversionMode).read(reader);
+
+    } catch (IOException ioe) {
+      throw new WarpScriptException(ioe);
+    }
+
+    stack.push(res);
 
     return stack;
   }

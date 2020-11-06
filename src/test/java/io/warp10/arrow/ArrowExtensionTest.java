@@ -195,7 +195,7 @@ public class ArrowExtensionTest {
 
     stack.exec(ArrowExtension.TOARROW);
 
-    stack.exec("'in' STORE { 'bytes' $in 'default' true }");
+    stack.exec("'in' STORE { 'bytes' $in 'WarpScriptConversionMode' 'PAIR' }");
     stack.exec(ArrowExtension.ARROWTO);
 
     List out = (List) stack.pop();

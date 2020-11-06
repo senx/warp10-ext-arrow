@@ -29,8 +29,8 @@ import java.util.Map;
  */
 public class TOARROW extends FormattedWarpScriptFunction {
 
-  private static final String IN = "in";
-  private static final String OUT = "out";
+  public static final String IN = "in";
+  public static final String OUT = "out";
 
   private final Arguments args;
   private final Arguments output;

@@ -28,6 +28,7 @@ import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.dictionary.Dictionary;
+import org.apache.arrow.vector.ipc.ArrowReader;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
@@ -37,6 +38,7 @@ import org.boon.json.JsonParser;
 import org.boon.json.JsonParserFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -57,9 +59,46 @@ import static io.warp10.arrow.direct.ArrowHelper.LONG_VALUES_KEY;
 import static io.warp10.arrow.direct.ArrowHelper.STRING_VALUES_KEY;
 import static io.warp10.arrow.direct.ArrowHelper.STU;
 import static io.warp10.arrow.direct.ArrowHelper.TIMESTAMPS_KEY;
-import static io.warp10.arrow.direct.ArrowHelper.TYPE;
+import static io.warp10.arrow.direct.ArrowHelper.MODE;
 
 public class ArrowReaders {
+
+  public static Object fromArrowStream(ReadableByteChannel in, boolean mapListOutput) throws WarpScriptException {
+
+    Object res = null;
+
+    try (ArrowStreamReader reader = new ArrowStreamReader(in, new RootAllocator(Integer.MAX_VALUE))) {
+
+      //
+      // Check types by reading schema
+      //
+
+      VectorSchemaRoot root = reader.getVectorSchemaRoot();
+
+      if (!mapListOutput && TYPEOF.typeof(GeoTimeSerie.class).equals(root.getSchema().getCustomMetadata().get(MODE))) {
+        res = arrowStreamToGTS(reader);
+
+      } else if (!mapListOutput && TYPEOF.typeof(GTSEncoder.class).equals(root.getSchema().getCustomMetadata().get(MODE))) {
+        res = arrowStreamToGtsEncoder(reader);
+
+      } else {
+
+        res = new ArrayList<>();
+        ((ArrayList) res).add(root.getSchema().getCustomMetadata());
+        ((ArrayList) res).add(arrowStreamToMapOfLists(reader));
+      }
+
+    } catch (IOException ioe) {
+      throw new WarpScriptException(ioe);
+    }
+
+    return res;
+  }
+
+  //
+  // GTS
+  //
+
 
   //
   // Json converters for labels and attributes
@@ -112,38 +151,6 @@ public class ArrowReaders {
     return gtsMeta;
   }
 
-  public static Object fromArrowStream(ReadableByteChannel in, boolean mapListOutput) throws WarpScriptException {
-
-    Object res = null;
-
-    try (ArrowStreamReader reader = new ArrowStreamReader(in, new RootAllocator(Integer.MAX_VALUE))) {
-
-      //
-      // Check types by reading schema
-      //
-
-      VectorSchemaRoot root = reader.getVectorSchemaRoot();
-
-      if (!mapListOutput && TYPEOF.typeof(GeoTimeSerie.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
-        res = arrowStreamToGTS(reader);
-
-      } else if (!mapListOutput && TYPEOF.typeof(GTSEncoder.class).equals(root.getSchema().getCustomMetadata().get(TYPE))) {
-        res = arrowStreamToGtsEncoder(reader);
-
-      } else {
-
-        res = new ArrayList<>();
-        ((ArrayList) res).add(root.getSchema().getCustomMetadata());
-        ((ArrayList) res).add(arrowStreamToMapOfLists(reader));
-      }
-
-    } catch (IOException ioe) {
-      throw new WarpScriptException(ioe);
-    }
-
-    return res;
-  }
-
   static void safeSetType(GeoTimeSerie gts, GeoTimeSerie.TYPE type) throws WarpScriptException {
     if (GeoTimeSerie.TYPE.UNDEFINED != gts.getType()) {
       throw new WarpScriptException("Tried to set type of a GTS that already has a type.");
@@ -152,11 +159,26 @@ public class ArrowReaders {
     }
   }
 
-  public static GeoTimeSerie arrowStreamToGTS(ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static GeoTimeSerie arrowStreamToGTS(InputStream in) throws WarpScriptException {
+
+    GeoTimeSerie gts = null;
+
+    try (ArrowStreamReader reader = new ArrowStreamReader(in, new RootAllocator(Integer.MAX_VALUE))) {
+
+      gts = arrowStreamToGTS(reader);
+
+    } catch (IOException ioe) {
+      throw new WarpScriptException(ioe);
+    }
+
+    return gts;
+  }
+
+  public static GeoTimeSerie arrowStreamToGTS(ArrowReader reader) throws IOException, WarpScriptException {
 
     VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Schema schema = root.getSchema();
-    if (!TYPEOF.typeof(GeoTimeSerie.class).equals(schema.getCustomMetadata().get(TYPE))) {
+    if (!TYPEOF.typeof(GeoTimeSerie.class).equals(schema.getCustomMetadata().get(MODE))) {
       throw new WarpScriptException("Tried to convert a GTS but input is not a GTS.");
     }
 
@@ -279,6 +301,11 @@ public class ArrowReaders {
     return gts;
   }
 
+  //
+  // ENCODER
+  //
+
+
   private enum ENCODER_VALUE_TYPE{
     LONG,
     DOUBLE,
@@ -288,11 +315,11 @@ public class ArrowReaders {
     BINARY
   }
 
-  public static GTSEncoder arrowStreamToGtsEncoder(ArrowStreamReader reader) throws IOException, WarpScriptException {
+  public static GTSEncoder arrowStreamToGtsEncoder(ArrowReader reader) throws IOException, WarpScriptException {
 
     VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Schema schema = root.getSchema();
-    if (!TYPEOF.typeof(GTSEncoder.class).equals(schema.getCustomMetadata().get(TYPE))) {
+    if (!TYPEOF.typeof(GTSEncoder.class).equals(schema.getCustomMetadata().get(MODE))) {
       throw new WarpScriptException("Tried to convert a GTSENCODER but input is not a GTSENCODER.");
     }
 
@@ -436,7 +463,37 @@ public class ArrowReaders {
     return encoder;
   }
 
-  public static Map<String, List> arrowStreamToMapOfLists(ArrowStreamReader reader) throws IOException, WarpScriptException {
+  //
+  // PAIR
+  //
+
+  public static List<Map> arrowStreamToPair(InputStream in) throws WarpScriptException {
+
+    List<Map> res = new ArrayList<>();
+
+    try (ArrowStreamReader reader = new ArrowStreamReader(in, new RootAllocator(Integer.MAX_VALUE))) {
+
+      res.add(reader.getVectorSchemaRoot().getSchema().getCustomMetadata());
+      res.add(arrowStreamToMapOfLists(reader));
+
+    } catch (IOException ioe) {
+      throw new WarpScriptException(ioe);
+    }
+
+    return res;
+  }
+
+  public static List<Map> arrowStreamToPair(ArrowReader reader) throws IOException, WarpScriptException {
+
+    List<Map> res = new ArrayList<>();
+
+    res.add(reader.getVectorSchemaRoot().getSchema().getCustomMetadata());
+    res.add(arrowStreamToMapOfLists(reader));
+
+    return res;
+  }
+
+  public static Map<String, List> arrowStreamToMapOfLists(ArrowReader reader) throws IOException, WarpScriptException {
 
     VectorSchemaRoot root = reader.getVectorSchemaRoot();
     Map<String, List> res = new HashMap<String, List>();

@@ -17,7 +17,9 @@
 package io.warp10.arrow.convert;
 
 import io.warp10.script.WarpScriptException;
+import org.apache.arrow.vector.ipc.ArrowReader;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -29,7 +31,7 @@ public interface Converter<T> {
 
     void write(T object, OutputStream out) throws WarpScriptException;
 
-    T read(InputStream in) throws WarpScriptException;
+    T read(ArrowReader reader) throws IOException, WarpScriptException;
 
     /**
      * Used if need to choose between converters of same conversion mode.

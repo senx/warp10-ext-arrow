@@ -16,13 +16,15 @@
 
 package io.warp10.arrow.convert;
 
+import io.warp10.arrow.direct.ArrowReaders;
 import io.warp10.arrow.direct.ArrowWriters;
 import io.warp10.arrow.pojo.WarpSchema;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.script.WarpScriptException;
+import org.apache.arrow.vector.ipc.ArrowReader;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +35,7 @@ public class Register {
 
     private final static Map<String, Converter> REGISTER = new HashMap<String, Converter>();
 
-    public static void addConverter(Converter converter){
+    public static void addConverter(Converter converter) {
         if (!REGISTER.containsKey(converter.getWarpScriptConversionMode()) || converter.getPriorityLevel() <= REGISTER.get(converter.getWarpScriptConversionMode()).getPriorityLevel()) {
             REGISTER.put(converter.getWarpScriptConversionMode(), converter);
         }
@@ -43,17 +45,21 @@ public class Register {
         return REGISTER.keySet();
     }
 
-    public static Converter getConverter(String type) {
-      return REGISTER.get(type);
+    public static Converter getConverter(String mode) {
+      return REGISTER.get(mode);
     }
 
-    public static boolean hasConverterForType(String type) {
-        return REGISTER.containsKey(type);
+    public static boolean isSupportedMode(String mode) {
+        return REGISTER.containsKey(mode);
     }
 
     //
     // Base converters
     //
+
+    public final static String ENCODERS = "ENCODERS";
+    public final static String GTS = "GTS";
+    public final static String PAIR = "PAIR";
 
     static {
 
@@ -64,7 +70,7 @@ public class Register {
         addConverter(new Converter<List>() {
             @Override
             public String getWarpScriptConversionMode() {
-                return "ENCODERS";
+                return ENCODERS;
             }
 
             @Override
@@ -88,9 +94,8 @@ public class Register {
             }
 
             @Override
-            public List read(InputStream in) {
-                //TODO
-                return null;
+            public List read(ArrowReader reader) throws WarpScriptException {
+                throw new WarpScriptException("Decoding not yet implemented for conversion mode " + getWarpScriptConversionMode());
             }
         });
 
@@ -101,7 +106,7 @@ public class Register {
         addConverter(new Converter<GeoTimeSerie>() {
             @Override
             public String getWarpScriptConversionMode() {
-                return "GTS";
+                return GTS;
             }
 
             @Override
@@ -115,9 +120,8 @@ public class Register {
             }
 
             @Override
-            public GeoTimeSerie read(InputStream in) throws WarpScriptException {
-                //TODO
-                return null;
+            public GeoTimeSerie read(ArrowReader reader) throws IOException, WarpScriptException {
+                return ArrowReaders.arrowStreamToGTS(reader);
             }
         });
 
@@ -128,7 +132,7 @@ public class Register {
         addConverter(new Converter<List>() {
             @Override
             public String getWarpScriptConversionMode() {
-                return "PAIR";
+                return PAIR;
             }
 
             @Override
@@ -170,9 +174,8 @@ public class Register {
             }
 
             @Override
-            public List read(InputStream in) {
-                //TODO
-                return null;
+            public List read(ArrowReader reader) throws IOException, WarpScriptException {
+                return ArrowReaders.arrowStreamToPair(reader);
             }
         });
     }

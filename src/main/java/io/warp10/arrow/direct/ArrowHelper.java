@@ -16,6 +16,7 @@
 
 package io.warp10.arrow.direct;
 
+import io.warp10.arrow.warpscriptFunctions.ARROWTO;
 import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
@@ -45,7 +46,7 @@ public class ArrowHelper {
   public final static String BUCKETCOUNT = "bucketcount";
   public final static String LASTBUCKET = "lastbucket";
 
-  public final static String TYPE = "WarpScriptType";
+  public final static String MODE = ARROWTO.MODE;
   public final static String REV = "WarpScriptVersion";
   public final static String STU = "WarpScriptTimeUnitsPerSecond";
 
