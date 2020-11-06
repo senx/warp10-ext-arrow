@@ -19,13 +19,14 @@ package io.warp10.arrow.pojo;
 import com.geoxp.GeoXPLib;
 import io.warp10.Revision;
 import io.warp10.arrow.ArrowExtension;
+import io.warp10.arrow.convert.Register;
+import io.warp10.arrow.warpscriptFunctions.ARROWTO;
 import io.warp10.continuum.gts.GTSDecoder;
 import io.warp10.continuum.gts.GTSEncoder;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GeoTimeSerie;
 import io.warp10.continuum.store.Constants;
 import io.warp10.script.WarpScriptException;
-import io.warp10.script.functions.TYPEOF;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -47,7 +48,7 @@ import java.util.Map;
  */
 public class WarpSchema {
 
-  public final static String TYPE = "WarpScriptType";
+  public final static String MODE = ARROWTO.MODE;
   public final static String REV = "WarpScriptVersion";
   public final static String STU = "WarpScriptTimeUnitsPerSecond";
 
@@ -446,7 +447,7 @@ public class WarpSchema {
     }
 
     Map<String, String> metadata = new HashMap<String, String>(2);
-    metadata.put(TYPE, TYPEOF.typeof(List.class));
+    metadata.put(MODE, Register.ENCODERS);
     metadata.put(REV, Revision.REVISION);
     metadata.put(STU, String.valueOf(Constants.TIME_UNITS_PER_S));
 
