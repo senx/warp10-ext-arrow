@@ -416,7 +416,7 @@ public class ArrowWriters {
   /**
    * Convert a map of columns (Lists) into an Arrow Stream.
    * The columns must have the same size.
-   * @param input A list of two items: custom metadata and map of columns (assumed to be of same size > 0)
+   * @param input A list of two items: custom metadata and map of columns (assumed to be of same size &gt; 0)
    * @param out
    * @throws WarpScriptException
    */
