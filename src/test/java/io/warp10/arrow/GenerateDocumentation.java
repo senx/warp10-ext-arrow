@@ -1,5 +1,5 @@
 //
-//   Copyright 2019  SenX S.A.S.
+//   Copyright 2019-23  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package io.warp10.arrow;
 
 import io.warp10.script.WarpScriptLib;
-import io.warp10.script.formatted.RunAndGenerateDocumentationWithUnitTests;
+import io.warp10.ext.formatted.RunAndGenerateDocumentationWithUnitTests;
 import org.junit.Test;
 
 import java.util.ArrayList;

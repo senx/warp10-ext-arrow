@@ -1,5 +1,5 @@
 //
-// Copyright 2020 SenX
+// Copyright 2020-23 SenX
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package io.warp10.arrow.warpscriptFunctions;
 import io.warp10.arrow.convert.Register;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
-import io.warp10.script.formatted.FormattedWarpScriptFunction;
+import io.warp10.ext.formatted.FormattedWarpScriptFunction;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 
