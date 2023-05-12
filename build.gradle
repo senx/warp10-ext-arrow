@@ -38,6 +38,7 @@ project.version = versioning.info.lastTag + ((versioning.info.tag != null) ? '' 
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 configurations {
@@ -49,8 +50,9 @@ configurations {
 //
 dependencies {
     provided 'io.warp10:warpscript:+'
-    testImplementation 'io.warp10:warpscript:+'
+    testImplementation 'io.warp10:warpscript:3.0.0-beta0'
     testImplementation 'junit:junit:4.12'
+
     //
     // Arrow
     //
